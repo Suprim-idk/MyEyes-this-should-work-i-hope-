@@ -3,6 +3,7 @@ modules = ["python-3.11"]
 
 [nix]
 channel = "stable-25_05"
+packages = ["espeak-ng", "libGL", "libGLU", "libjpeg_turbo", "libpng", "which"]
 
 [unitTest]
 language = "python3"

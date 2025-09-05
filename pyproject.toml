@@ -1,7 +1,12 @@
-[project]
-name = "python-template"
-version = "0.1.0"
-description = ""
-authors = ["Your Name <you@example.com>"]
-requires-python = ">=3.11"
-dependencies = []
+[tool.uv.sources]
+rastervision-pytorch-backend = [{ index = "pytorch-cpu", marker = "platform_system == 'Linux'" }]
+ytorch-cpu", marker = "platform_system == 'Linux'" }]
+qtorch = [{ index = "pytorch-cpu", marker = "platform_system == 'Linux'" }]
+FSRS-Optimizer = [{ index = "pytorch-cpu", marker = "platform_system == 'Linux'" }]
+GANDLF = [{ index = "pytorch-cpu", marker = "platform_system == 'Linux'" }]
+quanto = [{ index = "pytorch-cpu", marker = "platform_system == 'Linux'" }]
+GQLAlchemy = [{ index = "pytorch-cpu", marker = "platform_system == 'Linux'" }]
+quick-anomaly-detector = [{ index = "pytorch-cpu", marker = "platform_system == 'Linux'" }]
+rastervision = [{ index = "pytorch-cpu", marker = "platform_system == 'Linux'" }]
+GhostScan = [{ index = "pytorch-cpu", marker = "platform_system == 'Linux'" }]
+GraKeL = [{ index = "pytorch-cpu", marker = "platform_system == 'Linux'" }]
