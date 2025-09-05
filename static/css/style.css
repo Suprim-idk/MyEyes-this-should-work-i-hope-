@@ -37,6 +37,15 @@ header p {
     opacity: 0.9;
 }
 
+header p.motto {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #f7fafc;
+    margin-bottom: 10px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+    font-style: italic;
+}
+
 /* Status Panel */
 .status-panel {
     display: grid;

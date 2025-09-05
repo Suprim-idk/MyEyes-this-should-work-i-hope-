@@ -8,6 +8,7 @@ class NepalMapsApp {
         this.markersLayer = null;
         this.wheelchairMode = true;
         this.baatoApiKey = null;
+        this.openRouteApiKey = null;
         this.currentRoute = null;
         
         this.initializeApp();
@@ -15,8 +16,8 @@ class NepalMapsApp {
 
     async initializeApp() {
         try {
-            // Get API key from backend
-            await this.fetchApiKey();
+            // Get API keys from backend
+            await this.fetchApiKeys();
             
             // Initialize map
             this.initializeMap();
@@ -54,18 +55,37 @@ class NepalMapsApp {
         }
     }
 
-    async fetchApiKey() {
+    async fetchApiKeys() {
+        // Fetch OpenRouteService API key (preferred for routing)
+        try {
+            const response = await fetch('/api/openroute-key');
+            if (response.ok) {
+                const data = await response.json();
+                this.openRouteApiKey = data.api_key;
+                console.log('OpenRouteService API key loaded');
+            } else {
+                console.warn('OpenRouteService API key not available');
+            }
+        } catch (error) {
+            console.warn('Error fetching OpenRouteService API key:', error);
+        }
+        
+        // Fetch Baato API key (for search/geocoding)
         try {
             const response = await fetch('/api/baato-key');
             if (response.ok) {
                 const data = await response.json();
                 this.baatoApiKey = data.api_key;
+                console.log('Baato API key loaded');
             } else {
-                throw new Error('API key not available');
+                console.warn('Baato API key not available');
             }
         } catch (error) {
-            console.warn('Using demo mode - Baato API key not available');
-            // Continue in demo mode
+            console.warn('Error fetching Baato API key:', error);
+        }
+        
+        if (!this.openRouteApiKey && !this.baatoApiKey) {
+            console.warn('Using demo mode - No API keys available');
         }
     }
 
@@ -488,14 +508,20 @@ class NepalMapsApp {
 
     async calculateRoute(from, to) {
         try {
-            if (this.baatoApiKey) {
+            // Prefer OpenRouteService for better routing
+            if (this.openRouteApiKey) {
+                console.log('Using OpenRouteService for routing');
+                return await this.calculateRouteWithOpenRoute(from, to);
+            } else if (this.baatoApiKey) {
+                console.log('Using Baato API for routing');
                 return await this.calculateRouteWithBaato(from, to);
             } else {
+                console.log('No API keys available, using demo route');
                 return this.getMockRouteData(from, to);
             }
         } catch (error) {
             console.error('Route calculation error:', error);
-            this.showAlert('Unable to calculate route with Baato API. Using fallback route.', 'warning');
+            this.showAlert('Unable to calculate route. Using fallback route.', 'warning');
             return this.getMockRouteData(from, to);
         }
     }

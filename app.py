@@ -553,6 +553,15 @@ def get_baato_key():
     else:
         return jsonify({'error': 'API key not configured'}), 404
 
+@app.route('/api/openroute-key')
+def get_openroute_key():
+    import os
+    api_key = os.environ.get('OPENROUTESERVICE_API_KEY')
+    if api_key:
+        return jsonify({'api_key': api_key})
+    else:
+        return jsonify({'error': 'OpenRouteService API key not configured'}), 404
+
 @app.route('/api/camera/connect', methods=['POST'])
 def connect_camera():
     data = request.get_json()
