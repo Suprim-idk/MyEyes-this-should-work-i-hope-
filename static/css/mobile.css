@@ -238,6 +238,26 @@ body {
     color: white;
 }
 
+.emergency-button {
+    background: linear-gradient(135deg, #d32f2f 0%, #f44336 100%);
+    color: white;
+    font-size: 1.3rem;
+    font-weight: 800;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 20px rgba(211, 47, 47, 0.4);
+    border: 2px solid #b71c1c;
+    animation: emergency-pulse 2s infinite;
+}
+
+.emergency-button:active {
+    transform: scale(0.95);
+}
+
+@keyframes emergency-pulse {
+    0%, 100% { box-shadow: 0 4px 20px rgba(211, 47, 47, 0.4); }
+    50% { box-shadow: 0 6px 25px rgba(211, 47, 47, 0.7); }
+}
+
 .control-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
@@ -368,6 +388,126 @@ body {
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.8; }
+}
+
+/* Emergency Modal Styles */
+.emergency-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+}
+
+.emergency-content {
+    background: #fff;
+    border-radius: 20px;
+    padding: 30px;
+    margin: 20px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    max-width: 400px;
+    width: 100%;
+}
+
+.emergency-content h2 {
+    color: #d32f2f;
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    animation: emergency-pulse 1s infinite;
+}
+
+.emergency-status {
+    margin-bottom: 25px;
+}
+
+.emergency-status p {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.emergency-countdown {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #d32f2f;
+    animation: countdown-pulse 1s infinite;
+}
+
+@keyframes countdown-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+
+.emergency-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.emergency-action-btn {
+    padding: 15px 20px;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    touch-action: manipulation;
+}
+
+.call-btn {
+    background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+    color: white;
+}
+
+.location-btn {
+    background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+    color: white;
+}
+
+.alert-btn {
+    background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+    color: white;
+}
+
+.cancel-btn {
+    background: linear-gradient(135deg, #757575 0%, #424242 100%);
+    color: white;
+}
+
+.emergency-action-btn:active {
+    transform: scale(0.95);
+}
+
+/* Bystander Alert Overlay */
+.bystander-alert {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #ff1744;
+    z-index: 8888;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    font-weight: bold;
+    text-align: center;
+    animation: alert-flash 0.5s infinite;
+}
+
+@keyframes alert-flash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
 }
 
 /* Responsive adjustments */

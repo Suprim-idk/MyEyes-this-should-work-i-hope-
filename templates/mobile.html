@@ -64,6 +64,10 @@
             <button id="stopBtn" class="control-button stop-button" onclick="stopNavigation()" disabled>
                 🛑 Stop
             </button>
+            
+            <button id="emergencyBtn" class="control-button emergency-button" onclick="triggerEmergency()">
+                🚨 EMERGENCY
+            </button>
         </section>
 
         <!-- Settings Panel -->
@@ -78,14 +82,45 @@
                 <input type="range" id="sensitivitySlider" min="30" max="100" value="50">
                 <span id="sensitivityValue">50cm</span>
             </div>
-        </settings>
+            
+            <div class="setting-item">
+                <label for="emergencyContact">📞 Emergency Contact</label>
+                <input type="tel" id="emergencyContact" placeholder="Phone number" style="padding: 8px; border-radius: 8px; border: 1px solid #e2e8f0; width: 120px;">
+            </div>
+        </section>
 
         <!-- Alert System -->
         <div class="alert-system" id="alertSystem">
             <div class="alert-message" id="alertMessage"></div>
         </div>
+        
+        <!-- Emergency Modal -->
+        <div class="emergency-modal" id="emergencyModal" style="display: none;">
+            <div class="emergency-content">
+                <h2>🚨 EMERGENCY ACTIVATED</h2>
+                <div class="emergency-status" id="emergencyStatus">
+                    <p>Calling for help...</p>
+                    <div class="emergency-countdown" id="emergencyCountdown">10</div>
+                </div>
+                <div class="emergency-actions">
+                    <button class="emergency-action-btn call-btn" onclick="callEmergency()">
+                        📞 Call Emergency Contact
+                    </button>
+                    <button class="emergency-action-btn location-btn" onclick="shareLocation()">
+                        📍 Share Location
+                    </button>
+                    <button class="emergency-action-btn alert-btn" onclick="alertBystanders()">
+                        📢 Alert Bystanders
+                    </button>
+                    <button class="emergency-action-btn cancel-btn" onclick="cancelEmergency()">
+                        ❌ Cancel Emergency
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="{{ url_for('static', filename='js/mobile.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/emergency.js') }}"></script>
 </body>
 </html>

@@ -32,9 +32,19 @@ class MobileNavigationApp {
         this.cameraBtn = document.getElementById('cameraBtn');
         this.startBtn = document.getElementById('startBtn');
         this.stopBtn = document.getElementById('stopBtn');
+        this.emergencyBtn = document.getElementById('emergencyBtn');
         this.voiceToggle = document.getElementById('voiceToggle');
         this.sensitivitySlider = document.getElementById('sensitivitySlider');
         this.sensitivityValue = document.getElementById('sensitivityValue');
+        this.emergencyContact = document.getElementById('emergencyContact');
+        this.emergencyModal = document.getElementById('emergencyModal');
+        this.emergencyCountdown = document.getElementById('emergencyCountdown');
+        
+        // Emergency state
+        this.emergencyActive = false;
+        this.emergencyTimer = null;
+        this.bystanderAlert = null;
+        this.currentLocation = null;
     }
 
     initializeCanvas() {
@@ -62,6 +72,19 @@ class MobileNavigationApp {
                 navigator.wakeLock?.request('screen');
             }
         });
+        
+        // Emergency contact storage
+        const savedContact = localStorage.getItem('emergencyContact');
+        if (savedContact) {
+            this.emergencyContact.value = savedContact;
+        }
+        
+        this.emergencyContact.addEventListener('input', (e) => {
+            localStorage.setItem('emergencyContact', e.target.value);
+        });
+        
+        // Get current location for emergency
+        this.getCurrentLocation();
     }
 
     setupSocketHandlers() {
