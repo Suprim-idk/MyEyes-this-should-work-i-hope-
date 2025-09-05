@@ -123,11 +123,14 @@ class MobileNavigationApp {
         try {
             this.showAlert('Requesting camera permission...', 'info');
             
+            // Optimized constraints for mobile devices
             const constraints = {
                 video: {
                     facingMode: 'environment', // Use back camera
-                    width: { ideal: 640 },
-                    height: { ideal: 480 }
+                    width: { ideal: 1280, max: 1920 }, // Higher resolution for better analysis
+                    height: { ideal: 720, max: 1080 },
+                    frameRate: { ideal: 30, max: 60 },
+                    focusMode: 'continuous'
                 },
                 audio: false
             };
@@ -152,14 +155,19 @@ class MobileNavigationApp {
             let errorMessage = 'Camera access denied';
             
             if (error.name === 'NotAllowedError') {
-                errorMessage = 'Please allow camera access and try again';
+                errorMessage = 'Please allow camera access in your browser settings and refresh the page';
             } else if (error.name === 'NotFoundError') {
-                errorMessage = 'No camera found on device';
+                errorMessage = 'No camera found. Try using the rear camera if available';
             } else if (error.name === 'NotSupportedError') {
-                errorMessage = 'Camera not supported in this browser';
+                errorMessage = 'Camera not supported. Try using Chrome, Safari, or Firefox';
+            } else if (error.name === 'OverconstrainedError') {
+                // Fallback to lower resolution if high resolution fails
+                this.tryFallbackCamera();
+                return;
             }
             
             this.showAlert(errorMessage, 'error');
+            this.showCameraHelp();
         }
     }
 
@@ -1454,6 +1462,51 @@ class MobileNavigationApp {
         this.startBtn.disabled = this.isNavigationRunning || !this.cameraStream;
         this.stopBtn.disabled = !this.isNavigationRunning;
         this.cameraBtn.disabled = this.isNavigationRunning;
+    }
+
+    async tryFallbackCamera() {
+        try {
+            this.showAlert('Trying fallback camera settings...', 'info');
+            
+            // Fallback to basic constraints if high resolution fails
+            const fallbackConstraints = {
+                video: {
+                    facingMode: 'environment',
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
+                },
+                audio: false
+            };
+
+            this.cameraStream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+            this.cameraVideo.srcObject = this.cameraStream;
+            
+            this.cameraVideo.onloadedmetadata = () => {
+                this.cameraPlaceholder.style.display = 'none';
+                this.cameraVideo.style.display = 'block';
+                this.cameraBtn.textContent = '📹 Stop Camera';
+                this.startBtn.disabled = false;
+                this.setStatus('camera-active', 'Camera Active (Fallback Mode)');
+                this.showAlert('Camera activated with basic settings', 'success');
+                this.setupAnalysisCanvas();
+            };
+        } catch (fallbackError) {
+            this.showAlert('Unable to access camera with any settings', 'error');
+            console.error('Fallback camera error:', fallbackError);
+        }
+    }
+
+    showCameraHelp() {
+        // Provide helpful tips for mobile camera access
+        const tips = [
+            '💡 Make sure you\'re using HTTPS (secure connection)',
+            '📱 Try refreshing the page and allowing camera access',
+            '🔄 Check if other apps are using the camera',
+            '⚙️ Ensure camera permissions are enabled in browser settings'
+        ];
+        
+        console.log('Camera Help Tips:', tips);
+        // Could display these in a modal or alert for better UX
     }
 
     showAlert(message, type = 'info') {

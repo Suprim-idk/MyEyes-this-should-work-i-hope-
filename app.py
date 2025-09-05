@@ -523,7 +523,14 @@ def navigation_simulation():
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    # Detect mobile devices and redirect to mobile interface
+    user_agent = request.headers.get('User-Agent', '').lower()
+    mobile_keywords = ['mobile', 'android', 'iphone', 'ipad', 'ipod', 'blackberry', 'windows phone']
+    
+    if any(keyword in user_agent for keyword in mobile_keywords):
+        return render_template('mobile.html')
+    else:
+        return render_template('index.html')
 
 @app.route('/mobile')
 def mobile():
