@@ -501,24 +501,36 @@ class NepalMapsApp {
     }
 
     async calculateRouteWithBaato(from, to) {
-        const mode = this.wheelchairMode ? 'foot' : 'car';
+        const vehicle = this.wheelchairMode ? 'foot' : 'car';
         
-        // Use Baato Directions API with enhanced parameters for wheelchair navigation
-        const url = `https://api.baato.io/api/v1/directions?key=${this.baatoApiKey}&points=${from.lat},${from.lng};${to.lat},${to.lng}&mode=${mode}&alternatives=true&instructions=true&geometries=geojson`;
+        // Format coordinates as required by Baato API
+        const startPoint = `${from.lat},${from.lng}`;
+        const endPoint = `${to.lat},${to.lng}`;
+        
+        // Use Baato Directions API with correct parameter format
+        const url = new URL('https://api.baato.io/api/v1/directions');
+        url.searchParams.append('key', this.baatoApiKey);
+        url.searchParams.append('points[]', startPoint);
+        url.searchParams.append('points[]', endPoint);
+        url.searchParams.append('vehicle', vehicle);
+        url.searchParams.append('alternatives', 'false'); // Set to false for better performance
+        url.searchParams.append('instructions', 'true');
 
-        console.log('Making Baato API request:', url.replace(this.baatoApiKey, '[API_KEY]'));
+        console.log('Making Baato API request:', url.toString().replace(this.baatoApiKey, '[API_KEY]'));
 
         const response = await fetch(url);
-        if (!response.ok) {
-            console.error('Baato API error:', response.status, response.statusText);
-            throw new Error(`Route calculation failed: ${response.status} ${response.statusText}`);
-        }
-
         const data = await response.json();
-        console.log('Baato API response:', data);
+        
+        console.log('Baato API response status:', response.status);
+        console.log('Baato API response data:', data);
+        
+        if (!response.ok) {
+            console.error('Baato API error:', response.status, response.statusText, data);
+            throw new Error(`Route calculation failed: ${response.status} - ${data.message || response.statusText}`);
+        }
         
         if (!data.data || !data.data.length) {
-            throw new Error('No route found');
+            throw new Error('No route found in API response');
         }
         
         // Process route data for wheelchair accessibility
@@ -626,10 +638,31 @@ class NepalMapsApp {
         console.log('Processing route data:', routeData);
 
         const processedRoutes = routeData.map(route => {
-            // Convert Baato geometry to Leaflet format if needed
-            if (route.geometry && route.geometry.coordinates) {
+            console.log('Processing individual route:', route);
+            
+            // Handle Baato API response format
+            if (route.distanceInMeters !== undefined) {
+                route.distance = route.distanceInMeters;
+            }
+            if (route.timeInMs !== undefined) {
+                route.time = Math.round(route.timeInMs / 1000); // Convert to seconds
+            }
+            
+            // Convert Baato geometry to Leaflet format
+            if (route.geometry && Array.isArray(route.geometry)) {
+                // Baato returns geometry as array of [lat, lng] pairs
+                route.geometry = route.geometry.map(coord => {
+                    if (Array.isArray(coord) && coord.length >= 2) {
+                        return [parseFloat(coord[0]), parseFloat(coord[1])]; // [lat, lng]
+                    }
+                    return coord;
+                });
+            } else if (route.geometry && route.geometry.coordinates) {
                 // GeoJSON format: [lng, lat] -> Leaflet format: [lat, lng]
                 route.geometry = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
+            } else if (route.encodedPolyline) {
+                // If Baato returns encoded polyline, decode it
+                route.geometry = this.decodePolyline(route.encodedPolyline);
             } else if (route.legs && route.legs.length > 0) {
                 // If no main geometry, create from leg geometries
                 route.geometry = this.createGeometryFromLegs(route.legs);
@@ -748,6 +781,37 @@ class NepalMapsApp {
         }
         
         return obstacles;
+    }
+    
+    // Simple polyline decoder for Baato API encoded polylines
+    decodePolyline(encoded) {
+        const points = [];
+        let index = 0, len = encoded.length;
+        let lat = 0, lng = 0;
+        
+        while (index < len) {
+            let b, shift = 0, result = 0;
+            do {
+                b = encoded.charCodeAt(index++) - 63;
+                result |= (b & 0x1f) << shift;
+                shift += 5;
+            } while (b >= 0x20);
+            const dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+            lat += dlat;
+            
+            shift = 0;
+            result = 0;
+            do {
+                b = encoded.charCodeAt(index++) - 63;
+                result |= (b & 0x1f) << shift;
+                shift += 5;
+            } while (b >= 0x20);
+            const dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
+            lng += dlng;
+            
+            points.push([lat / 1E5, lng / 1E5]); // [lat, lng] format for Leaflet
+        }
+        return points;
     }
 
     assessRouteAccessibility(route) {
