@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nepal Maps - Wheelchair Navigation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/maps.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">
+            <h1>🗺️ Nepal Maps</h1>
+            <span class="subtitle">♿ Wheelchair Accessible Navigation</span>
+        </div>
+        <div class="header-controls">
+            <button id="wheelchair-mode" class="control-btn active" title="Wheelchair Mode">
+                ♿ Accessible Mode
+            </button>
+            <button id="toggle-sidebar" class="control-btn" title="Toggle Sidebar">
+                ☰
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div id="sidebar" class="sidebar">
+            <!-- Search Section -->
+            <div class="search-section">
+                <h3>🔍 Find Places</h3>
+                <div class="search-container">
+                    <input 
+                        type="text" 
+                        id="from-input" 
+                        placeholder="From: Current location" 
+                        class="search-input">
+                    <input 
+                        type="text" 
+                        id="to-input" 
+                        placeholder="To: Search destination" 
+                        class="search-input">
+                    <button id="get-directions" class="btn-primary">
+                        🧭 Get Directions
+                    </button>
+                    <button id="swap-locations" class="btn-secondary" title="Swap locations">
+                        🔄
+                    </button>
+                </div>
+            </div>
+
+            <!-- Wheelchair Options -->
+            <div class="wheelchair-options">
+                <h3>♿ Accessibility Options</h3>
+                <div class="option-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="avoid-stairs" checked>
+                        <span class="checkmark">🚫</span>
+                        Avoid stairs
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="prefer-low-traffic" checked>
+                        <span class="checkmark">🚶</span>
+                        Prefer low traffic routes
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="accessible-entrances">
+                        <span class="checkmark">🚪</span>
+                        Show accessible entrances
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="smooth-surfaces" checked>
+                        <span class="checkmark">🛣️</span>
+                        Prefer smooth surfaces
+                    </label>
+                </div>
+            </div>
+
+            <!-- Route Information -->
+            <div id="route-info" class="route-info" style="display: none;">
+                <h3>📍 Route Details</h3>
+                <div class="route-summary">
+                    <div class="route-stat">
+                        <span class="stat-label">Distance:</span>
+                        <span id="route-distance" class="stat-value">--</span>
+                    </div>
+                    <div class="route-stat">
+                        <span class="stat-label">Time:</span>
+                        <span id="route-time" class="stat-value">--</span>
+                    </div>
+                    <div class="route-stat">
+                        <span class="stat-label">Accessibility:</span>
+                        <span id="route-accessibility" class="stat-value">--</span>
+                    </div>
+                </div>
+                
+                <div class="accessibility-warnings" id="accessibility-warnings" style="display: none;">
+                    <h4>⚠️ Accessibility Alerts</h4>
+                    <div id="warning-list"></div>
+                </div>
+                
+                <div class="alternative-routes" id="alternative-routes" style="display: none;">
+                    <h4>🔄 Alternative Routes</h4>
+                    <div id="alt-routes-list"></div>
+                </div>
+
+                <button id="start-navigation" class="btn-success">
+                    🚀 Start Navigation
+                </button>
+            </div>
+
+            <!-- Nearby Places -->
+            <div class="nearby-places">
+                <h3>📍 Nearby Accessible Places</h3>
+                <div class="place-filters">
+                    <button class="filter-btn active" data-type="all">All</button>
+                    <button class="filter-btn" data-type="hospital">🏥 Hospitals</button>
+                    <button class="filter-btn" data-type="restaurant">🍽️ Restaurants</button>
+                    <button class="filter-btn" data-type="shopping">🛍️ Shopping</button>
+                    <button class="filter-btn" data-type="transport">🚌 Transport</button>
+                </div>
+                <div id="nearby-list" class="nearby-list">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Map Container -->
+        <div class="map-container">
+            <div id="map"></div>
+            
+            <!-- Map Controls -->
+            <div class="map-controls">
+                <button id="locate-me" class="map-control-btn" title="My Location">
+                    📍
+                </button>
+                <button id="zoom-in" class="map-control-btn" title="Zoom In">
+                    ➕
+                </button>
+                <button id="zoom-out" class="map-control-btn" title="Zoom Out">
+                    ➖
+                </button>
+                <button id="fullscreen" class="map-control-btn" title="Fullscreen">
+                    ⛶
+                </button>
+            </div>
+
+            <!-- Route Instructions Panel -->
+            <div id="instructions-panel" class="instructions-panel" style="display: none;">
+                <div class="instructions-header">
+                    <h4>🧭 Turn-by-turn Navigation</h4>
+                    <button id="close-instructions" class="close-btn">✕</button>
+                </div>
+                <div id="instructions-list" class="instructions-list">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+
+            <!-- Location Details Panel -->
+            <div id="location-details" class="location-details" style="display: none;">
+                <div class="details-header">
+                    <h4 id="location-name">Location Details</h4>
+                    <button id="close-details" class="close-btn">✕</button>
+                </div>
+                <div class="details-content">
+                    <div id="accessibility-rating" class="accessibility-rating">
+                        <span class="rating-label">Accessibility:</span>
+                        <span id="rating-value" class="rating-value">Unknown</span>
+                    </div>
+                    <div id="location-info" class="location-info">
+                        <!-- Address, phone, etc. -->
+                    </div>
+                    <div class="location-actions">
+                        <button id="get-directions-here" class="btn-primary">🧭 Directions</button>
+                        <button id="call-location" class="btn-secondary">📞 Call</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loading" class="loading" style="display: none;">
+        <div class="spinner"></div>
+        <p>Loading route information...</p>
+    </div>
+
+    <!-- Alert System -->
+    <div id="alert-system" class="alert-system">
+        <!-- Dynamic alerts -->
+    </div>
+
+    <!-- Navigation Footer -->
+    <div class="navigation-footer" style="position: fixed; bottom: 0; left: 0; right: 0; background: rgba(44,90,160,0.95); padding: 8px; text-align: center; z-index: 1000;">
+        <a href="/" style="display: inline-block; padding: 6px 12px; background: rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 15px; margin: 3px; font-size: 0.8rem;">
+            🏠 Main Navigation
+        </a>
+        <a href="/mobile" style="display: inline-block; padding: 6px 12px; background: rgba(255,255,255,0.2); color: white; text-decoration: none; border-radius: 15px; margin: 3px; font-size: 0.8rem;">
+            📱 Camera Navigation
+        </a>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/maps.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,586 @@
+/* Nepal Maps - Wheelchair Navigation CSS */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    overflow: hidden;
+}
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #2c5aa0 0%, #1e4080 100%);
+    color: white;
+    padding: 12px 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: 1000;
+    position: relative;
+}
+
+.logo h1 {
+    font-size: 1.5rem;
+    margin-bottom: 2px;
+}
+
+.subtitle {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.header-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.control-btn {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.control-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.control-btn.active {
+    background: #4CAF50;
+    border-color: #4CAF50;
+}
+
+/* Main Container */
+.main-container {
+    display: flex;
+    height: calc(100vh - 70px);
+}
+
+/* Sidebar */
+.sidebar {
+    width: 350px;
+    background: white;
+    border-right: 1px solid #ddd;
+    overflow-y: auto;
+    transition: transform 0.3s ease;
+    z-index: 500;
+}
+
+.sidebar.hidden {
+    transform: translateX(-100%);
+}
+
+.sidebar > div {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.sidebar h3 {
+    margin-bottom: 15px;
+    color: #2c5aa0;
+    font-size: 1.1rem;
+}
+
+/* Search Section */
+.search-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.search-input {
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    transition: border-color 0.3s ease;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #2c5aa0;
+}
+
+.btn-primary {
+    background: #2c5aa0;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: #1e4080;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.btn-success:hover {
+    background: #218838;
+}
+
+/* Wheelchair Options */
+.option-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 10px;
+    transition: background 0.3s ease;
+}
+
+.checkbox-label:hover {
+    background: #f8f9fa;
+}
+
+.checkbox-label input[type="checkbox"] {
+    display: none;
+}
+
+.checkmark {
+    margin-right: 10px;
+    font-size: 1.2rem;
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark {
+    opacity: 1;
+}
+
+.checkbox-label input[type="checkbox"]:not(:checked) + .checkmark {
+    opacity: 0.3;
+}
+
+/* Route Info */
+.route-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.route-stat {
+    text-align: center;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #2c5aa0;
+}
+
+.accessibility-warnings {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.accessibility-warnings h4 {
+    color: #856404;
+    margin-bottom: 10px;
+}
+
+/* Place Filters */
+.place-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+.filter-btn {
+    background: #e9ecef;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+.filter-btn.active {
+    background: #2c5aa0;
+    color: white;
+}
+
+.filter-btn:hover {
+    background: #dee2e6;
+}
+
+.filter-btn.active:hover {
+    background: #1e4080;
+}
+
+/* Map Container */
+.map-container {
+    flex: 1;
+    position: relative;
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+}
+
+/* Map Controls */
+.map-controls {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    z-index: 1000;
+}
+
+.map-control-btn {
+    width: 40px;
+    height: 40px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: background 0.3s ease;
+}
+
+.map-control-btn:hover {
+    background: #f5f5f5;
+}
+
+/* Instructions Panel */
+.instructions-panel {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    max-height: 300px;
+    z-index: 1000;
+}
+
+.instructions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.instructions-list {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 15px 20px;
+}
+
+.instruction-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.instruction-icon {
+    margin-right: 15px;
+    font-size: 1.5rem;
+    width: 30px;
+    text-align: center;
+}
+
+.instruction-text {
+    flex: 1;
+}
+
+/* Location Details Panel */
+.location-details {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 300px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    z-index: 1000;
+}
+
+.details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+    background: #f8f9fa;
+    border-radius: 10px 10px 0 0;
+}
+
+.details-content {
+    padding: 20px;
+}
+
+.accessibility-rating {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+
+.rating-value {
+    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 15px;
+}
+
+.rating-value.good {
+    background: #d4edda;
+    color: #155724;
+}
+
+.rating-value.limited {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.rating-value.poor {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.location-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.location-actions button {
+    flex: 1;
+}
+
+/* Close Buttons */
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 3px;
+}
+
+.close-btn:hover {
+    background: #f5f5f5;
+}
+
+/* Loading Indicator */
+.loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255,255,255,0.9);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #2c5aa0;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Alert System */
+.alert-system {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 1500;
+    max-width: 400px;
+}
+
+.alert {
+    background: white;
+    border-left: 4px solid #2c5aa0;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    animation: slideIn 0.3s ease;
+}
+
+.alert.success {
+    border-left-color: #28a745;
+}
+
+.alert.warning {
+    border-left-color: #ffc107;
+    background: #fff9c4;
+}
+
+.alert.error {
+    border-left-color: #dc3545;
+    background: #f8d7da;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .main-container {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 40vh;
+        position: relative;
+    }
+    
+    .sidebar.hidden {
+        transform: translateY(-100%);
+        height: 0;
+    }
+    
+    .map-container {
+        height: 60vh;
+    }
+    
+    .instructions-panel {
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+    }
+    
+    .location-details {
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        width: auto;
+    }
+}
+
+/* Leaflet Map Customizations */
+.leaflet-popup-content {
+    margin: 10px 15px;
+    line-height: 1.4;
+}
+
+.accessibility-marker {
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.accessibility-marker.good {
+    background: #28a745;
+}
+
+.accessibility-marker.limited {
+    background: #ffc107;
+}
+
+.accessibility-marker.poor {
+    background: #dc3545;
+}
+
+.accessibility-marker.unknown {
+    background: #6c757d;
+}
+
+/* Route line styles */
+.wheelchair-route {
+    color: #28a745;
+    weight: 6;
+    opacity: 0.8;
+}
+
+.alternative-route {
+    color: #6c757d;
+    weight: 4;
+    opacity: 0.6;
+    dashArray: '10, 10';
+}

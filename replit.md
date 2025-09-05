@@ -10,18 +10,22 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-* **Mobile Interface Implementation (September 5, 2025)**: Complete mobile-optimized wheelchair navigation interface now automatically serves to mobile devices
-* **Auto Mobile Detection**: App automatically detects mobile devices and serves mobile interface instead of desktop version  
-* **Enhanced Camera Integration**: Optimized getUserMedia API implementation with higher resolution support, fallback modes, and improved error handling for mobile browsers
-* **Wheelchair-Specific Features**: Real-time accessibility obstacle detection, path width analysis, surface type detection, voice guidance, and emergency functionality
+* **Nepal Maps Interface (September 5, 2025)**: Complete Google Maps-like navigation interface using Baato API for Nepal with wheelchair-accessible route planning
+* **Dual Navigation System**: Two distinct interfaces - mobile camera navigation for real-time obstacle detection and desktop maps navigation for route planning
+* **Wheelchair Route Optimization**: Advanced routing with options to avoid stairs, prefer low traffic routes, smooth surfaces, and accessible entrances
+* **Baato API Integration**: Full integration with Nepal's mapping service for accurate local navigation, search, and place discovery
+* **Accessibility-First Design**: All interfaces optimized for wheelchair users with large touch targets, high contrast, and voice guidance
 
 ## System Architecture
 
 ### Frontend Architecture
-- **HTML/CSS/JavaScript Interface**: Clean, accessible web interface optimized for wheelchair users with keyboard navigation and large touch targets
+- **Dual Interface System**: 
+  - **Mobile Camera Interface**: Real-time wheelchair obstacle detection with camera integration
+  - **Desktop Maps Interface**: Google Maps-like navigation using Baato API for Nepal
 - **WebSocket Client**: Real-time bidirectional communication using Socket.IO for instant navigation updates
 - **Audio Feedback System**: Text-to-speech integration for spoken wheelchair-specific navigation instructions and obstacle alerts
-- **Wheelchair Accessibility Panel**: Real-time display of path width, surface type, accessibility obstacles, and alternative route suggestions
+- **Interactive Maps**: Leaflet-based mapping with custom wheelchair accessibility markers and route visualization
+- **Search & Discovery**: Location search, nearby accessible places, and turn-by-turn navigation
 - **Responsive Design**: Grid-based layout with high-contrast elements and wheelchair accessibility information
 
 ### Backend Architecture
@@ -61,6 +65,11 @@ Preferred communication style: Simple, everyday language.
 - **PyTorch**: Deep learning framework for MiDaS model execution
 - **Intel MiDaS Models**: Pre-trained depth estimation models loaded via torch.hub
 - **NumPy**: Numerical computing library for array operations and depth map processing
+
+### Mapping & Navigation APIs
+- **Baato API**: Nepal's comprehensive mapping service for location search, routing, and place discovery
+- **Leaflet**: Open-source JavaScript mapping library for interactive map interfaces
+- **OpenStreetMap**: Base map tiles for comprehensive Nepal coverage
 
 ### Audio Processing
 - **pyttsx3**: Cross-platform text-to-speech synthesis library

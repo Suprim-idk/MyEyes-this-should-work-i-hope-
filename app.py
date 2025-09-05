@@ -536,9 +536,22 @@ def index():
 def mobile():
     return render_template('mobile.html')
 
+@app.route('/maps')
+def maps():
+    return render_template('maps.html')
+
 @app.route('/api/status')
 def get_status():
     return jsonify(navigation_state)
+
+@app.route('/api/baato-key')
+def get_baato_key():
+    import os
+    api_key = os.environ.get('BAATO_API_KEY')
+    if api_key:
+        return jsonify({'api_key': api_key})
+    else:
+        return jsonify({'error': 'API key not configured'}), 404
 
 @app.route('/api/camera/connect', methods=['POST'])
 def connect_camera():
