@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navigation Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧭 Navigation Assistant</h1>
+            <p>Accessible navigation system for visually impaired users</p>
+        </header>
+
+        <main>
+            <!-- Status Display -->
+            <section class="status-panel" role="region" aria-label="Navigation Status">
+                <div class="status-card">
+                    <h2>System Status</h2>
+                    <div class="status-indicator" id="statusIndicator">
+                        <span class="status-light" id="statusLight"></span>
+                        <span id="statusText">Ready</span>
+                    </div>
+                </div>
+
+                <div class="distance-card">
+                    <h2>Distance Ahead</h2>
+                    <div class="distance-display">
+                        <span class="distance-value" id="distanceValue">--</span>
+                        <span class="distance-unit">cm</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Navigation Controls -->
+            <section class="controls" role="region" aria-label="Navigation Controls">
+                <button 
+                    id="startBtn" 
+                    class="control-btn start-btn" 
+                    onclick="startNavigation()"
+                    aria-describedby="start-help">
+                    🚀 Start Navigation
+                </button>
+                
+                <button 
+                    id="stopBtn" 
+                    class="control-btn stop-btn" 
+                    onclick="stopNavigation()" 
+                    disabled
+                    aria-describedby="stop-help">
+                    🛑 Stop Navigation
+                </button>
+                
+                <div id="start-help" class="sr-only">Click to begin navigation assistance</div>
+                <div id="stop-help" class="sr-only">Click to stop navigation assistance</div>
+            </section>
+
+            <!-- Live Instructions -->
+            <section class="instructions" role="region" aria-label="Navigation Instructions" aria-live="polite">
+                <div class="instruction-card">
+                    <h2>Current Instruction</h2>
+                    <div class="instruction-display" id="instructionDisplay">
+                        <span class="instruction-text" id="instructionText">Press Start to begin navigation</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Real-time Alerts -->
+            <section class="alerts" role="alert" aria-live="assertive">
+                <div id="alertBox" class="alert-box hidden">
+                    <span id="alertText"></span>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Designed for accessibility • Voice guidance enabled</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/navigation.js') }}"></script>
+</body>
+</html>
