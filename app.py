@@ -65,8 +65,10 @@ def navigation_with_camera():
         ret, frame = cap.read()
         if not ret:
             navigation_state['camera_connected'] = False
-            navigation_state['last_instruction'] = 'Camera connection lost'
+            navigation_state['last_instruction'] = 'Camera connection lost - switching to demo mode'
             socketio.emit('navigation_update', navigation_state)
+            # Fall back to simulation if camera fails
+            navigation_simulation()
             break
             
         # Analyze frame for navigation
@@ -77,6 +79,7 @@ def navigation_with_camera():
         navigation_state['direction'] = analysis['direction']
         navigation_state['obstacle_detected'] = analysis['distance'] < 50
         navigation_state['camera_connected'] = True
+        navigation_state['mode'] = 'camera'
         
         if analysis['distance'] < 50:
             instruction = f"Turn {analysis['direction']} now"
@@ -88,6 +91,49 @@ def navigation_with_camera():
         socketio.emit('navigation_update', navigation_state)
         
         time.sleep(0.1)  # Faster updates with camera
+
+def navigation_enhanced_simulation():
+    """Enhanced simulation that mimics camera behavior"""
+    while navigation_state['is_running']:
+        # More realistic simulation that varies based on time
+        import math
+        current_time = time.time()
+        
+        # Create realistic movement patterns
+        base_distance = 100 + 50 * math.sin(current_time * 0.5)
+        noise = random.randint(-20, 20)
+        distance = max(15, int(base_distance + noise))
+        
+        # More intelligent direction changes
+        if distance < 60:
+            # When close to obstacles, prefer turning away from previous direction
+            if hasattr(navigation_state, 'last_turn'):
+                direction = 'right' if navigation_state.get('last_turn') == 'left' else 'left'
+            else:
+                direction = random.choice(['left', 'right'])
+            navigation_state['last_turn'] = direction
+        else:
+            direction = random.choice(['left', 'right', 'straight'])
+        
+        # Update state
+        navigation_state['distance'] = distance
+        navigation_state['direction'] = direction
+        navigation_state['obstacle_detected'] = distance < 50
+        navigation_state['mode'] = 'enhanced_demo'
+        
+        if distance < 50:
+            instruction = f"Turn {direction} now - obstacle at {distance}cm"
+            navigation_state['last_instruction'] = instruction
+        elif distance < 80:
+            instruction = f"Caution - obstacle ahead at {distance}cm"
+            navigation_state['last_instruction'] = instruction
+        else:
+            navigation_state['last_instruction'] = "Path is clear - safe to continue"
+        
+        # Emit real-time update to frontend
+        socketio.emit('navigation_update', navigation_state)
+        
+        time.sleep(1.5)  # Balanced update speed
 
 def navigation_simulation():
     """Simulate the navigation system for demo purposes"""
@@ -189,8 +235,8 @@ def handle_start_navigation(data=None):
         navigation_state['mode'] = 'camera'
         thread = threading.Thread(target=navigation_with_camera)
     else:
-        navigation_state['mode'] = 'demo'
-        thread = threading.Thread(target=navigation_simulation)
+        navigation_state['mode'] = 'enhanced_demo'
+        thread = threading.Thread(target=navigation_enhanced_simulation)
     
     thread.daemon = True
     thread.start()
