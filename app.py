@@ -162,6 +162,10 @@ def navigation_simulation():
 def index():
     return render_template('index.html')
 
+@app.route('/mobile')
+def mobile():
+    return render_template('mobile.html')
+
 @app.route('/api/status')
 def get_status():
     return jsonify(navigation_state)
@@ -308,6 +312,25 @@ def handle_connect_usb_camera(data):
             
     except Exception as e:
         emit('camera_error', {'message': f'USB camera error: {str(e)}'})
+
+@socketio.on('camera_analysis')
+def handle_camera_analysis(data):
+    """Handle real-time camera analysis from mobile client"""
+    if navigation_state['is_running']:
+        # Update navigation state with mobile analysis
+        navigation_state['distance'] = data.get('distance', 0)
+        navigation_state['direction'] = data.get('direction', 'straight')
+        navigation_state['obstacle_detected'] = data.get('distance', 999) < 50
+        navigation_state['mode'] = 'mobile_camera'
+        
+        if navigation_state['obstacle_detected']:
+            instruction = f"Turn {navigation_state['direction']} now!"
+            navigation_state['last_instruction'] = instruction
+        else:
+            navigation_state['last_instruction'] = "Path is clear"
+        
+        # Broadcast update to all connected clients
+        socketio.emit('navigation_update', navigation_state)
 
 @socketio.on('connect')
 def handle_connect():

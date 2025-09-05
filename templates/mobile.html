@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Mobile Navigation Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+<body>
+    <div class="mobile-container">
+        <!-- Header -->
+        <header class="mobile-header">
+            <h1>🧭 Navigation</h1>
+            <div class="status-indicator" id="systemStatus">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusText">Ready</span>
+            </div>
+        </header>
+
+        <!-- Camera View -->
+        <section class="camera-section">
+            <div class="camera-container" id="cameraContainer">
+                <video id="cameraVideo" autoplay playsinline muted></video>
+                <canvas id="analysisCanvas" style="display: none;"></canvas>
+                
+                <!-- Camera Overlay -->
+                <div class="camera-overlay">
+                    <div class="center-guide"></div>
+                    <div class="distance-overlay" id="distanceOverlay">
+                        <span class="distance-value" id="distanceValue">--</span>
+                        <span class="distance-unit">cm</span>
+                    </div>
+                </div>
+                
+                <!-- Camera Placeholder -->
+                <div class="camera-placeholder" id="cameraPlaceholder">
+                    <div class="placeholder-content">
+                        <span class="camera-icon">📹</span>
+                        <p>Tap to access camera</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Instruction Panel -->
+        <section class="instruction-panel">
+            <div class="instruction-card" id="instructionCard">
+                <div class="instruction-icon" id="instructionIcon">ℹ️</div>
+                <div class="instruction-text" id="instructionText">Tap Start to begin navigation</div>
+            </div>
+        </section>
+
+        <!-- Controls -->
+        <section class="mobile-controls">
+            <button id="cameraBtn" class="control-button camera-button" onclick="toggleCamera()">
+                📹 Enable Camera
+            </button>
+            
+            <button id="startBtn" class="control-button start-button" onclick="startNavigation()" disabled>
+                🚀 Start Navigation
+            </button>
+            
+            <button id="stopBtn" class="control-button stop-button" onclick="stopNavigation()" disabled>
+                🛑 Stop
+            </button>
+        </section>
+
+        <!-- Settings Panel -->
+        <section class="settings-panel">
+            <div class="setting-item">
+                <label for="voiceToggle">🔊 Voice Guidance</label>
+                <input type="checkbox" id="voiceToggle" checked>
+            </div>
+            
+            <div class="setting-item">
+                <label for="sensitivitySlider">⚡ Sensitivity</label>
+                <input type="range" id="sensitivitySlider" min="30" max="100" value="50">
+                <span id="sensitivityValue">50cm</span>
+            </div>
+        </settings>
+
+        <!-- Alert System -->
+        <div class="alert-system" id="alertSystem">
+            <div class="alert-message" id="alertMessage"></div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/mobile.js') }}"></script>
+</body>
+</html>
