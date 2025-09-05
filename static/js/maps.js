@@ -24,8 +24,8 @@ class NepalMapsApp {
             // Setup event listeners
             this.setupEventListeners();
             
-            // Get user location
-            await this.getCurrentLocation();
+            // Get user location or set default
+            await this.initializeLocation();
             
             // Load nearby accessible places
             this.loadNearbyPlaces();
@@ -34,6 +34,23 @@ class NepalMapsApp {
         } catch (error) {
             console.error('Failed to initialize app:', error);
             this.showAlert('Failed to initialize maps. Please refresh the page.', 'error');
+        }
+    }
+    
+    async initializeLocation() {
+        try {
+            // Try to get current location
+            await this.getCurrentLocation(false);
+        } catch (error) {
+            console.log('Could not get current location, using Kathmandu as default');
+            // Set default location to Kathmandu
+            this.currentLocation = { lat: 27.7172, lng: 85.3240 };
+            
+            // Update the from input with default location
+            const fromInput = document.getElementById('from-input');
+            fromInput.placeholder = 'From: Kathmandu (Default)';
+            fromInput.dataset.lat = this.currentLocation.lat.toString();
+            fromInput.dataset.lng = this.currentLocation.lng.toString();
         }
     }
 
@@ -122,8 +139,11 @@ class NepalMapsApp {
                     .openPopup();
             }
 
-            // Update from input
-            document.getElementById('from-input').placeholder = 'From: Current location';
+            // Update from input with current location
+            const fromInput = document.getElementById('from-input');
+            fromInput.placeholder = 'From: Current location';
+            fromInput.dataset.lat = this.currentLocation.lat;
+            fromInput.dataset.lng = this.currentLocation.lng;
             
             console.log('Current location obtained:', this.currentLocation);
         } catch (error) {
@@ -132,6 +152,11 @@ class NepalMapsApp {
             
             // Default to Kathmandu
             this.currentLocation = { lat: 27.7172, lng: 85.3240 };
+            
+            // Update the from input
+            const fromInput = document.getElementById('from-input');
+            fromInput.dataset.lat = this.currentLocation.lat.toString();
+            fromInput.dataset.lng = this.currentLocation.lng.toString();
         }
     }
 
@@ -155,6 +180,11 @@ class NepalMapsApp {
 
         document.getElementById('swap-locations').addEventListener('click', () => {
             this.swapLocations();
+        });
+        
+        // Demo route button
+        document.getElementById('demo-route').addEventListener('click', () => {
+            this.setDemoRoute();
         });
 
         // Map controls
@@ -213,9 +243,14 @@ class NepalMapsApp {
                     const searchResults = await this.searchLocation(input.value.trim());
                     if (searchResults && searchResults.length > 0) {
                         const location = searchResults[0];
-                        input.dataset.lat = location.lat;
-                        input.dataset.lng = location.lon || location.lng;
-                        input.value = location.name || location.address;
+                        const lat = location.centroid ? location.centroid.lat : location.lat;
+                        const lng = location.centroid ? location.centroid.lon : (location.lon || location.lng);
+                        
+                        input.dataset.lat = lat;
+                        input.dataset.lng = lng;
+                        input.value = location.name || location.address || location.display_name;
+                        
+                        console.log('Set coordinates for', input.id, ':', lat, lng);
                         
                         // Add marker
                         const iconType = input.id === 'from-input' ? '🚀' : '🏁';
@@ -229,7 +264,7 @@ class NepalMapsApp {
                             }
                         });
                         
-                        L.marker([location.lat, location.lon || location.lng], {
+                        L.marker([lat, lng], {
                             icon: this.createCustomIcon(iconType, color),
                             className: markerClass
                         }).addTo(this.markersLayer)
@@ -243,10 +278,13 @@ class NepalMapsApp {
     async searchLocation(query) {
         try {
             if (this.baatoApiKey) {
-                const response = await fetch(`https://api.baato.io/api/v1/search?key=${this.baatoApiKey}&q=${encodeURIComponent(query)}&limit=5&type=poi`);
+                const response = await fetch(`https://api.baato.io/api/v1/search?key=${this.baatoApiKey}&q=${encodeURIComponent(query)}&limit=5`);
                 if (response.ok) {
                     const data = await response.json();
+                    console.log('Search results:', data);
                     return data.data || [];
+                } else {
+                    console.error('Search API error:', response.status, response.statusText);
                 }
             }
             return [];
@@ -394,26 +432,43 @@ class NepalMapsApp {
         let fromCoords, toCoords;
 
         // Get from coordinates
-        if (fromInput.dataset.lat && fromInput.dataset.lng) {
+        if (fromInput.dataset.lat && fromInput.dataset.lng && 
+            !isNaN(parseFloat(fromInput.dataset.lat)) && !isNaN(parseFloat(fromInput.dataset.lng))) {
             fromCoords = {
                 lat: parseFloat(fromInput.dataset.lat),
                 lng: parseFloat(fromInput.dataset.lng)
             };
-        } else if (this.currentLocation) {
+            console.log('Using from coordinates from input:', fromCoords);
+        } else if (this.currentLocation && this.currentLocation.lat && this.currentLocation.lng) {
             fromCoords = this.currentLocation;
+            console.log('Using current location:', fromCoords);
         } else {
-            this.showAlert('Please select a starting location', 'warning');
+            this.showAlert('Please select a starting location or enable location services', 'warning');
+            await this.getCurrentLocation(true); // Try to get location
             return;
         }
 
         // Get to coordinates
-        if (toInput.dataset.lat && toInput.dataset.lng) {
+        if (toInput.dataset.lat && toInput.dataset.lng && 
+            !isNaN(parseFloat(toInput.dataset.lat)) && !isNaN(parseFloat(toInput.dataset.lng))) {
             toCoords = {
                 lat: parseFloat(toInput.dataset.lat),
                 lng: parseFloat(toInput.dataset.lng)
             };
+            console.log('Using destination coordinates:', toCoords);
         } else {
             this.showAlert('Please select a destination', 'warning');
+            return;
+        }
+
+        // Validate coordinates are reasonable (within Nepal bounds roughly)
+        if (fromCoords.lat < 26 || fromCoords.lat > 31 || fromCoords.lng < 80 || fromCoords.lng > 89) {
+            this.showAlert('Starting location seems to be outside Nepal. Please select a valid location.', 'warning');
+            return;
+        }
+        
+        if (toCoords.lat < 26 || toCoords.lat > 31 || toCoords.lng < 80 || toCoords.lng > 89) {
+            this.showAlert('Destination seems to be outside Nepal. Please select a valid location.', 'warning');
             return;
         }
 
@@ -440,6 +495,7 @@ class NepalMapsApp {
             }
         } catch (error) {
             console.error('Route calculation error:', error);
+            this.showAlert('Unable to calculate route with Baato API. Using fallback route.', 'warning');
             return this.getMockRouteData(from, to);
         }
     }
@@ -470,6 +526,22 @@ class NepalMapsApp {
     }
 
     getMockRouteData(from, to) {
+        console.log('Creating mock route data from:', from, 'to:', to);
+        
+        // Validate input coordinates
+        if (!from || !to || isNaN(from.lat) || isNaN(from.lng) || isNaN(to.lat) || isNaN(to.lng)) {
+            console.error('Invalid coordinates for mock route:', from, to);
+            return {
+                routes: [{
+                    geometry: [[27.7172, 85.3240], [27.7172, 85.3240]], // Default Kathmandu
+                    distance: 100,
+                    time: 300,
+                    instructions: [{ instruction: 'Unable to calculate route', distance: 0, time: 0 }],
+                    accessibility: { rating: 'unknown', warnings: ['Route calculation failed'], features: [] }
+                }]
+            };
+        }
+        
         // Calculate approximate distance and time
         const distance = this.calculateDistance(from, to);
         const time = Math.round(distance * (this.wheelchairMode ? 15 : 3)); // minutes
@@ -481,15 +553,35 @@ class NepalMapsApp {
                 time: time * 60, // seconds
                 instructions: this.generateMockInstructions(from, to),
                 accessibility: {
-                    rating: 'good',
+                    rating: 'limited',
                     warnings: this.wheelchairMode ? [
-                        'Some sidewalks may have uneven surfaces',
-                        'Check for accessible entrances at destination'
+                        'Route calculated without real-time accessibility data',
+                        'Please verify path accessibility before proceeding'
                     ] : [],
-                    features: ['Wide sidewalks', 'Smooth surfaces', 'Ramp access']
+                    features: ['Basic route calculation'],
+                    obstacles: this.generateMockObstacles(from, to)
                 }
             }]
         };
+    }
+    
+    generateMockObstacles(from, to) {
+        // Generate some mock accessibility obstacles for demonstration
+        const obstacles = [];
+        
+        if (this.wheelchairMode && Math.random() > 0.5) {
+            const midLat = (from.lat + to.lat) / 2;
+            const midLng = (from.lng + to.lng) / 2;
+            
+            obstacles.push({
+                type: 'stairs',
+                location: [midLng, midLat],
+                instruction: 'Potential stairs or steps along this route',
+                severity: 'critical'
+            });
+        }
+        
+        return obstacles;
     }
 
     calculateDistance(from, to) {
@@ -932,13 +1024,23 @@ class NepalMapsApp {
             if (selectingLocation) {
                 const latlng = e.latlng;
                 
+                console.log('Map clicked for location selection:', latlng);
+                
+                // Validate coordinates are reasonable
+                if (latlng.lat < 26 || latlng.lat > 31 || latlng.lng < 80 || latlng.lng > 89) {
+                    this.showAlert('Please select a location within Nepal', 'warning');
+                    return;
+                }
+                
                 // Reverse geocode to get address
                 const address = await this.reverseGeocode(latlng.lat, latlng.lng);
                 
                 if (selectingLocation === 'from') {
                     fromInput.value = address;
-                    fromInput.dataset.lat = latlng.lat;
-                    fromInput.dataset.lng = latlng.lng;
+                    fromInput.dataset.lat = latlng.lat.toString();
+                    fromInput.dataset.lng = latlng.lng.toString();
+                    
+                    console.log('Set FROM coordinates:', latlng.lat, latlng.lng);
                     
                     // Clear existing start markers and add new one
                     this.markersLayer.eachLayer(layer => {
@@ -955,8 +1057,10 @@ class NepalMapsApp {
                       
                 } else if (selectingLocation === 'to') {
                     toInput.value = address;
-                    toInput.dataset.lat = latlng.lat;
-                    toInput.dataset.lng = latlng.lng;
+                    toInput.dataset.lat = latlng.lat.toString();
+                    toInput.dataset.lng = latlng.lng.toString();
+                    
+                    console.log('Set TO coordinates:', latlng.lat, latlng.lng);
                     
                     // Clear existing destination markers and add new one
                     this.markersLayer.eachLayer(layer => {
@@ -976,6 +1080,13 @@ class NepalMapsApp {
                 this.map.getContainer().style.cursor = 'grab';
                 fromInput.blur();
                 toInput.blur();
+                
+                // Hide the info alert
+                const alertSystem = document.getElementById('alert-system');
+                if (alertSystem) {
+                    alertSystem.innerHTML = '';
+                }
+                
             } else {
                 // Original behavior - show location details
                 this.showLocationDetails(e.latlng);
@@ -994,13 +1105,16 @@ class NepalMapsApp {
     
     async reverseGeocode(lat, lng) {
         try {
-            if (this.baatoApiKey) {
+            if (this.baatoApiKey && !isNaN(lat) && !isNaN(lng)) {
                 const response = await fetch(`https://api.baato.io/api/v1/reverse?key=${this.baatoApiKey}&lat=${lat}&lon=${lng}&limit=1`);
                 if (response.ok) {
                     const data = await response.json();
                     if (data.data && data.data.length > 0) {
-                        return data.data[0].name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                        const place = data.data[0];
+                        return place.name || place.address || place.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
                     }
+                } else {
+                    console.warn('Reverse geocoding API error:', response.status);
                 }
             }
             return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
@@ -1013,6 +1127,49 @@ class NepalMapsApp {
     onMapClick(latlng) {
         // Show location details on map click
         this.showLocationDetails(latlng);
+    }
+    
+    setDemoRoute() {
+        const fromInput = document.getElementById('from-input');
+        const toInput = document.getElementById('to-input');
+        
+        // Set demo locations in Kathmandu
+        const startLocation = { lat: 27.7172, lng: 85.3240, name: 'Kathmandu Durbar Square' };
+        const endLocation = { lat: 27.7089, lng: 85.3206, name: 'Thamel, Kathmandu' };
+        
+        // Set input values and data
+        fromInput.value = startLocation.name;
+        fromInput.dataset.lat = startLocation.lat.toString();
+        fromInput.dataset.lng = startLocation.lng.toString();
+        
+        toInput.value = endLocation.name;
+        toInput.dataset.lat = endLocation.lat.toString();
+        toInput.dataset.lng = endLocation.lng.toString();
+        
+        // Clear existing markers
+        this.markersLayer.clearLayers();
+        
+        // Add demo markers
+        L.marker([startLocation.lat, startLocation.lng], {
+            icon: this.createCustomIcon('🚀', '#28a745'),
+            className: 'start-marker'
+        }).addTo(this.markersLayer)
+          .bindPopup('Start: ' + startLocation.name);
+          
+        L.marker([endLocation.lat, endLocation.lng], {
+            icon: this.createCustomIcon('🏁', '#dc3545'),
+            className: 'destination-marker'
+        }).addTo(this.markersLayer)
+          .bindPopup('Destination: ' + endLocation.name);
+        
+        // Zoom to show both markers
+        const bounds = L.latLngBounds([
+            [startLocation.lat, startLocation.lng],
+            [endLocation.lat, endLocation.lng]
+        ]);
+        this.map.fitBounds(bounds, { padding: [20, 20] });
+        
+        this.showAlert('Demo locations set! Click "Get Directions" to see the route.', 'success');
     }
 
     showLocationDetails(latlng) {
