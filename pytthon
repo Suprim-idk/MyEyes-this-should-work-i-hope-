@@ -74,37 +74,52 @@ def provide_guidance(distance, direction):
         engine.runAndWait()
 
 try:
+    if SIMULATION_MODE:
+        print("=== NAVIGATION SYSTEM DEMO MODE ===")
+        print("Camera not available - running demonstration")
+        print("This simulates the navigation assistance for visually impaired users")
+        print("Press Ctrl+C to stop\n")
+    
     while True:
         if SIMULATION_MODE:
             # Simulate navigation with varying distances and obstacles
             import random
             distance = random.randint(10, 200)  # Random distance between 10-200cm
             direction = random.choice(["left", "right"])
-            print(f"[SIMULATION] Distance: {distance} cm")
+            print(f"[DEMO] Distance ahead: {distance} cm")
             
             # Provide guidance if obstacle is too close
             provide_guidance(distance, direction)
             
-            time.sleep(2)  # Slower simulation
+            time.sleep(3)  # Slower for demo
         else:
+            print("=== NAVIGATION SYSTEM - CAMERA MODE ===")
+            print("Camera detected - starting real-time navigation")
+            print("Press 'q' to quit\n")
+            
             ret, frame = cap.read()
             if not ret:
+                print("ERROR: Could not read from camera")
                 break
 
-            # Measure distance
+            # Measure distance using ultrasonic sensor
             distance = measure_distance()
-            print(f"Distance: {distance} cm")
+            print(f"Ultrasonic distance: {distance} cm")
 
-            # Analyze frame for open path
+            # Analyze camera frame for open path
             direction = analyze_frame(frame)
+            print(f"Recommended direction: {direction}")
 
             # Provide guidance if obstacle is too close
             provide_guidance(distance, direction)
 
-            # Display frame (for debugging)
-            cv2.imshow('Camera', frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+            # Display frame for debugging (remove this for actual use)
+            try:
+                cv2.imshow('Navigation Camera View', frame)
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+            except:
+                print("Display not available - running in headless mode")
 
             time.sleep(0.1) # Control loop speed
 
