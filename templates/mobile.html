@@ -11,7 +11,7 @@
     <div class="mobile-container">
         <!-- Header -->
         <header class="mobile-header">
-            <h1>🧭 Navigation</h1>
+            <h1>♿ Wheelchair Navigation</h1>
             <div class="status-indicator" id="systemStatus">
                 <span class="status-dot" id="statusDot"></span>
                 <span id="statusText">Ready</span>
@@ -48,6 +48,32 @@
             <div class="instruction-card" id="instructionCard">
                 <div class="instruction-icon" id="instructionIcon">ℹ️</div>
                 <div class="instruction-text" id="instructionText">Tap Start to begin navigation</div>
+            </div>
+        </section>
+
+        <!-- Wheelchair Accessibility Panel -->
+        <section class="wheelchair-panel">
+            <div class="accessibility-info">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">Path Width</span>
+                        <span class="info-value" id="pathWidthValue">--cm</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Surface</span>
+                        <span class="info-value" id="surfaceTypeValue">Unknown</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="obstacles-alert" id="obstaclesAlert" style="display: none;">
+                <div class="alert-header">⚠️ Accessibility Alert</div>
+                <div class="obstacle-list" id="obstacleList"></div>
+            </div>
+            
+            <div class="route-suggestion" id="routeSuggestion" style="display: none;">
+                <div class="suggestion-header">💡 Alternative Route</div>
+                <div class="suggestion-text" id="suggestionText"></div>
             </div>
         </section>
 

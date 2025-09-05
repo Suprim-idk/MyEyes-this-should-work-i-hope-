@@ -10,8 +10,8 @@
 <body>
     <div class="container">
         <header>
-            <h1>🧭 Navigation Assistant</h1>
-            <p>Accessible navigation system for visually impaired users</p>
+            <h1>♿ Wheelchair Navigation Assistant</h1>
+            <p>Accessible navigation system with wheelchair accessibility features</p>
         </header>
 
         <main>
@@ -111,6 +111,35 @@
                     <div class="instruction-display" id="instructionDisplay">
                         <span class="instruction-text" id="instructionText">Press Start to begin navigation</span>
                     </div>
+                </div>
+            </section>
+
+            <!-- Wheelchair Accessibility Panel -->
+            <section class="wheelchair-info" role="region" aria-label="Wheelchair Accessibility Information">
+                <div class="info-row">
+                    <div class="info-card">
+                        <h3>Path Analysis</h3>
+                        <div class="info-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Width:</span>
+                                <span class="detail-value" id="pathWidth">--cm</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Surface:</span>
+                                <span class="detail-value" id="surfaceType">Unknown</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accessibility-alerts" id="accessibilityAlerts" style="display: none;">
+                        <h3>⚠️ Accessibility Obstacles</h3>
+                        <div class="alerts-list" id="alertsList"></div>
+                    </div>
+                </div>
+                
+                <div class="route-suggestions" id="routeSuggestions" style="display: none;">
+                    <h3>💡 Alternative Route Suggestion</h3>
+                    <p class="suggestion-text" id="alternativeRoute"></p>
                 </div>
             </section>
 

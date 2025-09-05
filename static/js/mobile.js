@@ -95,6 +95,7 @@ class MobileNavigationApp {
 
         this.socket.on('navigation_update', (data) => {
             this.updateNavigationDisplay(data);
+            this.updateWheelchairInfo(data);
         });
 
         this.socket.on('navigation_started', () => {
@@ -1323,6 +1324,109 @@ class MobileNavigationApp {
             // Update with obstacle type info if available
             if (data.obstacleType && data.obstacleType !== 'none') {
                 // Could show obstacle type in UI: `${data.obstacleType} detected`
+            }
+        }
+    }
+
+    updateWheelchairInfo(data) {
+        // Update path width
+        if (data.path_width) {
+            const pathWidthElement = document.getElementById('pathWidthValue');
+            if (pathWidthElement) {
+                pathWidthElement.textContent = `${data.path_width}cm`;
+                
+                // Color-code based on wheelchair accessibility
+                if (data.path_width < 90) {
+                    pathWidthElement.style.color = '#dc2626';
+                    pathWidthElement.style.fontWeight = 'bold';
+                } else if (data.path_width < 120) {
+                    pathWidthElement.style.color = '#ea580c';
+                } else {
+                    pathWidthElement.style.color = '#16a34a';
+                }
+            }
+        }
+
+        // Update surface type
+        if (data.surface_type) {
+            const surfaceElement = document.getElementById('surfaceTypeValue');
+            if (surfaceElement) {
+                surfaceElement.textContent = data.surface_type.charAt(0).toUpperCase() + data.surface_type.slice(1);
+                
+                // Color-code based on wheelchair suitability
+                if (['rough', 'gravel', 'sand'].includes(data.surface_type)) {
+                    surfaceElement.style.color = '#dc2626';
+                } else if (data.surface_type === 'textured') {
+                    surfaceElement.style.color = '#ea580c';
+                } else {
+                    surfaceElement.style.color = '#16a34a';
+                }
+            }
+        }
+
+        // Handle accessibility obstacles
+        const obstaclesAlert = document.getElementById('obstaclesAlert');
+        const obstacleList = document.getElementById('obstacleList');
+        
+        if (data.accessibility_obstacles && data.accessibility_obstacles.length > 0) {
+            if (obstaclesAlert && obstacleList) {
+                obstaclesAlert.style.display = 'block';
+                
+                // Create obstacle list HTML
+                const obstacleHTML = data.accessibility_obstacles.map(obstacle => 
+                    `<div class="obstacle-item">
+                        <strong>${obstacle.type.replace('_', ' ').toUpperCase()}:</strong><br>
+                        ${obstacle.message}
+                    </div>`
+                ).join('');
+                
+                obstacleList.innerHTML = obstacleHTML;
+                
+                // Enhanced voice alerts for critical obstacles
+                const criticalObstacles = data.accessibility_obstacles.filter(o => o.severity === 'critical');
+                if (criticalObstacles.length > 0 && this.voiceEnabled) {
+                    if (!this.lastCriticalWheelchairAlert || Date.now() - this.lastCriticalWheelchairAlert > 3000) {
+                        this.speak(criticalObstacles[0].message);
+                        this.lastCriticalWheelchairAlert = Date.now();
+                        
+                        // Intense vibration for critical wheelchair obstacles
+                        if (navigator.vibrate) {
+                            navigator.vibrate([500, 300, 500, 300, 500, 300, 500]);
+                        }
+                    }
+                }
+            }
+        } else {
+            if (obstaclesAlert) {
+                obstaclesAlert.style.display = 'none';
+            }
+        }
+
+        // Handle alternative route suggestions
+        const routeSuggestion = document.getElementById('routeSuggestion');
+        const suggestionText = document.getElementById('suggestionText');
+        
+        if (data.alternative_route_suggestion && data.alternative_route_suggestion.trim()) {
+            if (routeSuggestion && suggestionText) {
+                routeSuggestion.style.display = 'block';
+                suggestionText.textContent = data.alternative_route_suggestion;
+            }
+        } else {
+            if (routeSuggestion) {
+                routeSuggestion.style.display = 'none';
+            }
+        }
+
+        // Handle accessibility signs
+        if (data.accessibility_signs && data.accessibility_signs.length > 0) {
+            for (const sign of data.accessibility_signs) {
+                if (sign.type === 'possible_accessibility_sign') {
+                    // Voice alert for accessibility signs
+                    if (this.voiceEnabled && (!this.lastSignAlert || Date.now() - this.lastSignAlert > 10000)) {
+                        this.speak(sign.message);
+                        this.lastSignAlert = Date.now();
+                    }
+                }
             }
         }
     }
