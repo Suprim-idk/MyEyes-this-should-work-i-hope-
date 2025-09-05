@@ -194,6 +194,66 @@ class NepalMapsApp {
 
         // Search input auto-complete
         this.setupSearchAutoComplete();
+        
+        // Add search functionality to inputs
+        this.setupSearchFunctionality();
+        
+        // Map location selection
+        this.setupMapLocationSelection();
+    }
+    
+    setupSearchFunctionality() {
+        const fromInput = document.getElementById('from-input');
+        const toInput = document.getElementById('to-input');
+        
+        // Add search on Enter key
+        [fromInput, toInput].forEach(input => {
+            input.addEventListener('keypress', async (e) => {
+                if (e.key === 'Enter' && input.value.trim()) {
+                    const searchResults = await this.searchLocation(input.value.trim());
+                    if (searchResults && searchResults.length > 0) {
+                        const location = searchResults[0];
+                        input.dataset.lat = location.lat;
+                        input.dataset.lng = location.lon || location.lng;
+                        input.value = location.name || location.address;
+                        
+                        // Add marker
+                        const iconType = input.id === 'from-input' ? '🚀' : '🏁';
+                        const color = input.id === 'from-input' ? '#28a745' : '#dc3545';
+                        const markerClass = input.id === 'from-input' ? 'start-marker' : 'destination-marker';
+                        
+                        // Clear existing similar markers
+                        this.markersLayer.eachLayer(layer => {
+                            if (layer.options && layer.options.className === markerClass) {
+                                this.markersLayer.removeLayer(layer);
+                            }
+                        });
+                        
+                        L.marker([location.lat, location.lon || location.lng], {
+                            icon: this.createCustomIcon(iconType, color),
+                            className: markerClass
+                        }).addTo(this.markersLayer)
+                          .bindPopup(input.value);
+                    }
+                }
+            });
+        });
+    }
+    
+    async searchLocation(query) {
+        try {
+            if (this.baatoApiKey) {
+                const response = await fetch(`https://api.baato.io/api/v1/search?key=${this.baatoApiKey}&q=${encodeURIComponent(query)}&limit=5&type=poi`);
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.data || [];
+                }
+            }
+            return [];
+        } catch (error) {
+            console.error('Search failed:', error);
+            return [];
+        }
     }
 
     setupSearchAutoComplete() {
@@ -386,12 +446,24 @@ class NepalMapsApp {
 
     async calculateRouteWithBaato(from, to) {
         const mode = this.wheelchairMode ? 'foot' : 'car';
-        const url = `https://api.baato.io/api/v1/directions?key=${this.baatoApiKey}&points=${from.lat},${from.lng};${to.lat},${to.lng}&mode=${mode}&alternatives=true&instructions=true`;
+        
+        // Use Baato Directions API with enhanced parameters for wheelchair navigation
+        const url = `https://api.baato.io/api/v1/directions?key=${this.baatoApiKey}&points=${from.lat},${from.lng};${to.lat},${to.lng}&mode=${mode}&alternatives=true&instructions=true&geometries=geojson`;
+
+        console.log('Making Baato API request:', url.replace(this.baatoApiKey, '[API_KEY]'));
 
         const response = await fetch(url);
-        if (!response.ok) throw new Error('Route calculation failed');
+        if (!response.ok) {
+            console.error('Baato API error:', response.status, response.statusText);
+            throw new Error(`Route calculation failed: ${response.status} ${response.statusText}`);
+        }
 
         const data = await response.json();
+        console.log('Baato API response:', data);
+        
+        if (!data.data || !data.data.length) {
+            throw new Error('No route found');
+        }
         
         // Process route data for wheelchair accessibility
         return this.processRouteForAccessibility(data.data);
@@ -459,16 +531,131 @@ class NepalMapsApp {
     processRouteForAccessibility(routeData) {
         if (!routeData || !routeData.length) return null;
 
-        const route = routeData[0];
-        
-        // Add accessibility analysis
-        route.accessibility = {
-            rating: this.assessRouteAccessibility(route),
-            warnings: this.generateAccessibilityWarnings(route),
-            features: this.identifyAccessibilityFeatures(route)
-        };
+        console.log('Processing route data:', routeData);
 
-        return { routes: routeData };
+        const processedRoutes = routeData.map(route => {
+            // Convert Baato geometry to Leaflet format if needed
+            if (route.geometry && route.geometry.coordinates) {
+                // GeoJSON format: [lng, lat] -> Leaflet format: [lat, lng]
+                route.geometry = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
+            } else if (route.legs && route.legs.length > 0) {
+                // If no main geometry, create from leg geometries
+                route.geometry = this.createGeometryFromLegs(route.legs);
+            } else {
+                // Fallback: create geometry from route points
+                route.geometry = this.createGeometryFromInstructions(route);
+            }
+            
+            console.log('Route geometry:', route.geometry);
+            
+            // Add accessibility analysis
+            route.accessibility = {
+                rating: this.assessRouteAccessibility(route),
+                warnings: this.generateAccessibilityWarnings(route),
+                features: this.identifyAccessibilityFeatures(route),
+                obstacles: this.detectAccessibilityObstacles(route)
+            };
+
+            return route;
+        });
+
+        return { routes: processedRoutes };
+    }
+    
+    createGeometryFromLegs(legs) {
+        const geometry = [];
+        
+        legs.forEach(leg => {
+            if (leg.geometry && leg.geometry.coordinates) {
+                leg.geometry.coordinates.forEach(coord => {
+                    geometry.push([coord[1], coord[0]]); // [lng, lat] -> [lat, lng]
+                });
+            } else if (leg.steps) {
+                leg.steps.forEach(step => {
+                    if (step.geometry && step.geometry.coordinates) {
+                        step.geometry.coordinates.forEach(coord => {
+                            geometry.push([coord[1], coord[0]]);  
+                        });
+                    } else if (step.maneuver && step.maneuver.location) {
+                        const [lng, lat] = step.maneuver.location;
+                        geometry.push([lat, lng]);
+                    }
+                });
+            }
+        });
+        
+        return geometry.length > 0 ? geometry : [[27.7172, 85.3240], [27.7172, 85.3240]];
+    }
+    
+    createGeometryFromInstructions(route) {
+        // If no geometry available, create simple path from instructions
+        const geometry = [];
+        if (route.legs && route.legs.length > 0) {
+            route.legs.forEach(leg => {
+                if (leg.steps) {
+                    leg.steps.forEach(step => {
+                        if (step.maneuver && step.maneuver.location) {
+                            const [lng, lat] = step.maneuver.location;
+                            geometry.push([lat, lng]);
+                        }
+                    });
+                }
+            });
+        }
+        return geometry.length > 0 ? geometry : [[27.7172, 85.3240], [27.7172, 85.3240]];
+    }
+    
+    detectAccessibilityObstacles(route) {
+        const obstacles = [];
+        
+        if (!this.wheelchairMode) return obstacles;
+        
+        // Analyze route instructions for accessibility obstacles
+        if (route.legs) {
+            route.legs.forEach(leg => {
+                if (leg.steps) {
+                    leg.steps.forEach(step => {
+                        const instruction = step.maneuver?.instruction || '';
+                        
+                        // Detect stairs mentions
+                        if (instruction.toLowerCase().includes('stairs') || 
+                            instruction.toLowerCase().includes('steps')) {
+                            obstacles.push({
+                                type: 'stairs',
+                                location: step.maneuver?.location,
+                                instruction: instruction,
+                                severity: 'critical'
+                            });
+                        }
+                        
+                        // Detect steep inclines
+                        if (instruction.toLowerCase().includes('steep') || 
+                            instruction.toLowerCase().includes('uphill') ||
+                            instruction.toLowerCase().includes('climb')) {
+                            obstacles.push({
+                                type: 'steep_slope',
+                                location: step.maneuver?.location,
+                                instruction: instruction,
+                                severity: 'high'
+                            });
+                        }
+                        
+                        // Detect narrow paths
+                        if (instruction.toLowerCase().includes('narrow') || 
+                            instruction.toLowerCase().includes('footpath')) {
+                            obstacles.push({
+                                type: 'narrow_path',
+                                location: step.maneuver?.location,
+                                instruction: instruction,
+                                severity: 'medium'
+                            });
+                        }
+                    });
+                }
+            });
+        }
+        
+        return obstacles;
     }
 
     assessRouteAccessibility(route) {
@@ -545,6 +732,8 @@ class NepalMapsApp {
         const route = routeData.routes[0];
         this.currentRoute = route;
 
+        console.log('Displaying route with geometry:', route.geometry);
+
         // Create route polyline
         const routeLine = L.polyline(route.geometry, {
             color: this.getRouteColor(route.accessibility?.rating),
@@ -553,16 +742,59 @@ class NepalMapsApp {
         }).addTo(this.routeLayer);
 
         // Add markers for start and end
-        L.marker(route.geometry[0])
-            .addTo(this.routeLayer)
-            .bindPopup('🚀 Start');
+        L.marker(route.geometry[0], {
+            icon: this.createCustomIcon('🚀', '#28a745')
+        }).addTo(this.routeLayer)
+          .bindPopup('🚀 Start');
 
-        L.marker(route.geometry[route.geometry.length - 1])
-            .addTo(this.routeLayer)
-            .bindPopup('🏁 Destination');
+        L.marker(route.geometry[route.geometry.length - 1], {
+            icon: this.createCustomIcon('🏁', '#dc3545')
+        }).addTo(this.routeLayer)
+          .bindPopup('🏁 Destination');
+
+        // Add accessibility obstacle markers
+        this.addObstacleMarkers(route);
 
         // Fit map to route
         this.map.fitBounds(routeLine.getBounds(), { padding: [20, 20] });
+    }
+    
+    addObstacleMarkers(route) {
+        if (!route.accessibility?.obstacles) return;
+        
+        route.accessibility.obstacles.forEach(obstacle => {
+            if (!obstacle.location) return;
+            
+            const [lng, lat] = obstacle.location;
+            let icon, color, popup;
+            
+            switch (obstacle.type) {
+                case 'stairs':
+                    icon = '🚫';
+                    color = '#dc3545';
+                    popup = `⚠️ STAIRS DETECTED<br/>${obstacle.instruction}`;
+                    break;
+                case 'steep_slope':
+                    icon = '⛰️';
+                    color = '#ffc107';
+                    popup = `⚠️ STEEP SLOPE<br/>${obstacle.instruction}`;
+                    break;
+                case 'narrow_path':
+                    icon = '↔️';
+                    color = '#fd7e14';
+                    popup = `⚠️ NARROW PATH<br/>${obstacle.instruction}`;
+                    break;
+                default:
+                    icon = '⚠️';
+                    color = '#6c757d';
+                    popup = `⚠️ OBSTACLE<br/>${obstacle.instruction}`;
+            }
+            
+            L.marker([lat, lng], {
+                icon: this.createCustomIcon(icon, color)
+            }).addTo(this.routeLayer)
+              .bindPopup(popup);
+        });
     }
 
     getRouteColor(accessibilityRating) {
@@ -665,6 +897,117 @@ class NepalMapsApp {
         toInput.value = tempValue;
         toInput.dataset.lat = tempLat;
         toInput.dataset.lng = tempLng;
+    }
+
+    setupMapLocationSelection() {
+        let selectingLocation = null; // 'from' or 'to'
+        
+        // Add click handlers to input fields to enable location selection mode
+        const fromInput = document.getElementById('from-input');
+        const toInput = document.getElementById('to-input');
+        
+        fromInput.addEventListener('focus', () => {
+            selectingLocation = 'from';
+            this.map.getContainer().style.cursor = 'crosshair';
+            this.showAlert('Click on map to select starting location', 'info');
+        });
+        
+        toInput.addEventListener('focus', () => {
+            selectingLocation = 'to';
+            this.map.getContainer().style.cursor = 'crosshair';
+            this.showAlert('Click on map to select destination', 'info');
+        });
+        
+        // Reset cursor when clicking elsewhere
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#map') && !e.target.closest('.search-input')) {
+                selectingLocation = null;
+                this.map.getContainer().style.cursor = 'grab';
+            }
+        });
+        
+        // Handle map clicks for location selection
+        this.map.off('click'); // Remove existing click handler
+        this.map.on('click', async (e) => {
+            if (selectingLocation) {
+                const latlng = e.latlng;
+                
+                // Reverse geocode to get address
+                const address = await this.reverseGeocode(latlng.lat, latlng.lng);
+                
+                if (selectingLocation === 'from') {
+                    fromInput.value = address;
+                    fromInput.dataset.lat = latlng.lat;
+                    fromInput.dataset.lng = latlng.lng;
+                    
+                    // Clear existing start markers and add new one
+                    this.markersLayer.eachLayer(layer => {
+                        if (layer.options && layer.options.className === 'start-marker') {
+                            this.markersLayer.removeLayer(layer);
+                        }
+                    });
+                    
+                    L.marker([latlng.lat, latlng.lng], {
+                        icon: this.createCustomIcon('🚀', '#28a745'),
+                        className: 'start-marker'
+                    }).addTo(this.markersLayer)
+                      .bindPopup('Start: ' + address);
+                      
+                } else if (selectingLocation === 'to') {
+                    toInput.value = address;
+                    toInput.dataset.lat = latlng.lat;
+                    toInput.dataset.lng = latlng.lng;
+                    
+                    // Clear existing destination markers and add new one
+                    this.markersLayer.eachLayer(layer => {
+                        if (layer.options && layer.options.className === 'destination-marker') {
+                            this.markersLayer.removeLayer(layer);
+                        }
+                    });
+                    
+                    L.marker([latlng.lat, latlng.lng], {
+                        icon: this.createCustomIcon('🏁', '#dc3545'),
+                        className: 'destination-marker'
+                    }).addTo(this.markersLayer)
+                      .bindPopup('Destination: ' + address);
+                }
+                
+                selectingLocation = null;
+                this.map.getContainer().style.cursor = 'grab';
+                fromInput.blur();
+                toInput.blur();
+            } else {
+                // Original behavior - show location details
+                this.showLocationDetails(e.latlng);
+            }
+        });
+    }
+    
+    createCustomIcon(emoji, color) {
+        return L.divIcon({
+            html: `<div style="background: ${color}; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: white; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">${emoji}</div>`,
+            className: 'custom-marker',
+            iconSize: [35, 35],
+            iconAnchor: [17, 17]
+        });
+    }
+    
+    async reverseGeocode(lat, lng) {
+        try {
+            if (this.baatoApiKey) {
+                const response = await fetch(`https://api.baato.io/api/v1/reverse?key=${this.baatoApiKey}&lat=${lat}&lon=${lng}&limit=1`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.data && data.data.length > 0) {
+                        return data.data[0].name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                    }
+                }
+            }
+            return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        } catch (error) {
+            console.error('Reverse geocoding failed:', error);
+            return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        }
     }
 
     onMapClick(latlng) {

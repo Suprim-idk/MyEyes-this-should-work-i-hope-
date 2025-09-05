@@ -10,7 +10,12 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-* **Nepal Maps Interface (September 5, 2025)**: Complete Google Maps-like navigation interface using Baato API for Nepal with wheelchair-accessible route planning
+* **Enhanced Nepal Maps Interface (September 5, 2025)**: Complete Google Maps-like navigation interface using Baato API for Nepal with improved wheelchair-accessible route planning:
+  - **Improved Location Selection**: Click-to-select functionality - users can click on input fields and then click anywhere on the map to select start and destination points with automatic reverse geocoding
+  - **Real Road Routing**: Enhanced Baato API integration that follows actual roads and paths instead of showing straight lines between points
+  - **Accessibility Obstacle Markers**: Red warning icons automatically placed on routes to mark stairs, steep slopes, and narrow paths that may be difficult for wheelchair users
+  - **Enhanced Search**: Users can type location names and press Enter to search and automatically place markers
+  - **Custom Markers**: Beautiful custom icons for start points (🚀), destinations (🏁), and various obstacle types (🚫 for stairs, ⛰️ for slopes, ↔️ for narrow paths)
 * **Dual Navigation System**: Two distinct interfaces - mobile camera navigation for real-time obstacle detection and desktop maps navigation for route planning
 * **Wheelchair Route Optimization**: Advanced routing with options to avoid stairs, prefer low traffic routes, smooth surfaces, and accessible entrances
 * **Baato API Integration**: Full integration with Nepal's mapping service for accurate local navigation, search, and place discovery
