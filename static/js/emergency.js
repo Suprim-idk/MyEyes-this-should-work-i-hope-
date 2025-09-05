@@ -66,7 +66,7 @@ Object.assign(MobileNavigationApp.prototype, {
     },
     
     callEmergency() {
-        const emergencyNumber = this.emergencyContact.value || '911';
+        const emergencyNumber = this.emergencyContact.value || '100';
         
         if (emergencyNumber) {
             // Attempt to call
@@ -76,7 +76,7 @@ Object.assign(MobileNavigationApp.prototype, {
             this.speak(`Calling emergency contact: ${emergencyNumber}`);
             this.showAlert(`Calling ${emergencyNumber}...`, 'error');
         } else {
-            this.speak('No emergency contact set. Please call 911 manually.');
+            this.speak('No emergency contact set. Please call 100 manually.');
             this.showAlert('No emergency contact configured!', 'error');
         }
     },

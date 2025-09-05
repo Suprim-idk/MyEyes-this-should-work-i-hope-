@@ -10,6 +10,7 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+* **Localized Emergency Contact (September 5, 2025)**: Updated emergency contact number from 911 to 100 for Nepal's local emergency services
 * **Enhanced Nepal Maps Interface (September 5, 2025)**: Complete Google Maps-like navigation interface using Baato API for Nepal with improved wheelchair-accessible route planning:
   - **Improved Location Selection**: Click-to-select functionality - users can click on input fields and then click anywhere on the map to select start and destination points with automatic reverse geocoding
   - **Real Road Routing**: Enhanced Baato API integration that follows actual roads and paths instead of showing straight lines between points
