@@ -539,12 +539,7 @@ class NepalMapsApp {
             elevation: true,
             extra_info: ['steepness', 'surface'],
             options: {
-                avoid_features: this.wheelchairMode ? ['steps'] : [],
-                profile_params: {
-                    restrictions: {
-                        gradient: this.wheelchairMode ? 6 : 15 // Max gradient percentage
-                    }
-                }
+                avoid_features: this.wheelchairMode ? ['steps'] : []
             }
         };
 
@@ -1447,14 +1442,31 @@ class NepalMapsApp {
         // Realistic route geometry following actual roads from Baneshwor to Civil Hospital
         const routeGeometry = [
             [27.6893, 85.3458], // Baneshwor starting point
-            [27.6902, 85.3442], // Along Baneshwor road
+            [27.6895, 85.3455], // Start on local road
+            [27.6898, 85.3450], // Continue on local road
+            [27.6902, 85.3442], // Along Baneshwor main road
+            [27.6905, 85.3438], // Continue on main road
+            [27.6910, 85.3432], // Approach major intersection
             [27.6915, 85.3425], // Turn towards Ring Road
+            [27.6920, 85.3420], // Approach Ring Road
+            [27.6925, 85.3412], // Enter Ring Road
             [27.6928, 85.3408], // Ring Road junction
+            [27.6935, 85.3398], // Continue on Ring Road
+            [27.6940, 85.3392], // Ring Road section
             [27.6945, 85.3385], // Along Ring Road (stairs location)
+            [27.6950, 85.3378], // Continue on Ring Road
+            [27.6955, 85.3372], // Ring Road curve
             [27.6958, 85.3365], // Continuing on Ring Road (pothole 1)
-            [27.6968, 85.3348], // Approach to Civil Hospital area (ramp)
+            [27.6962, 85.3358], // Ring Road section
+            [27.6965, 85.3352], // Approach hospital turn
+            [27.6968, 85.3348], // Turn towards Civil Hospital area (ramp)
+            [27.6972, 85.3340], // Hospital access road
+            [27.6975, 85.3335], // Continue towards hospital
             [27.6978, 85.3325], // Turn towards hospital (pothole 2)
+            [27.6980, 85.3320], // Hospital approach
+            [27.6982, 85.3315], // Getting closer to hospital
             [27.6985, 85.3310], // Hospital approach road (pothole 3)
+            [27.6987, 85.3305], // Final approach
             [27.6988, 85.3294]  // Civil Hospital destination
         ];
         
@@ -1514,7 +1526,7 @@ class NepalMapsApp {
             routes: [{
                 geometry: routeGeometry,
                 distance: 1210, // meters
-                time: 860, // seconds (about 14 minutes walking)
+                time: 600, // seconds (10 minutes walking)
                 instructions: instructions,
                 accessibility: {
                     rating: 'poor', // Due to 66 stairs
