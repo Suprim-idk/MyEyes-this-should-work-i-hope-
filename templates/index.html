@@ -34,6 +34,53 @@
                 </div>
             </section>
 
+            <!-- Camera Setup -->
+            <section class="camera-setup" role="region" aria-label="Camera Setup">
+                <div class="camera-card">
+                    <h2>Camera Configuration</h2>
+                    <div class="camera-status" id="cameraStatus">
+                        <span class="status-light" id="cameraLight"></span>
+                        <span id="cameraStatusText">No camera connected</span>
+                    </div>
+                    
+                    <div class="camera-options">
+                        <div class="camera-option">
+                            <h3>📱 Phone Camera</h3>
+                            <p>Use your phone as a camera via DroidCam</p>
+                            <div class="input-group">
+                                <input 
+                                    type="text" 
+                                    id="phoneIP" 
+                                    placeholder="192.168.1.100" 
+                                    aria-label="Phone IP Address">
+                                <button 
+                                    class="control-btn phone-btn" 
+                                    onclick="connectPhoneCamera()">
+                                    Connect Phone
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="camera-option">
+                            <h3>🔌 USB Camera</h3>
+                            <p>Connect a USB webcam or built-in camera</p>
+                            <div class="input-group">
+                                <select id="usbCameraId" aria-label="USB Camera ID">
+                                    <option value="0">Camera 0 (Default)</option>
+                                    <option value="1">Camera 1</option>
+                                    <option value="2">Camera 2</option>
+                                </select>
+                                <button 
+                                    class="control-btn usb-btn" 
+                                    onclick="connectUSBCamera()">
+                                    Connect USB
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- Navigation Controls -->
             <section class="controls" role="region" aria-label="Navigation Controls">
                 <button 

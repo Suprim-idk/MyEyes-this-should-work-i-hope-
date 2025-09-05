@@ -18,6 +18,12 @@ class NavigationInterface {
         this.stopBtn = document.getElementById('stopBtn');
         this.alertBox = document.getElementById('alertBox');
         this.alertText = document.getElementById('alertText');
+        
+        // Camera elements
+        this.cameraLight = document.getElementById('cameraLight');
+        this.cameraStatusText = document.getElementById('cameraStatusText');
+        this.phoneIP = document.getElementById('phoneIP');
+        this.usbCameraId = document.getElementById('usbCameraId');
     }
 
     setupSocketHandlers() {
@@ -44,6 +50,18 @@ class NavigationInterface {
             this.setStatus('stopped', 'Navigation Stopped');
             this.showAlert('Navigation stopped', 'clear');
             this.speak('Navigation system stopped');
+        });
+        
+        this.socket.on('camera_connected', (data) => {
+            this.setCameraStatus('connected', data.message);
+            this.showAlert(data.message, 'clear');
+            this.speak('Camera connected successfully');
+        });
+        
+        this.socket.on('camera_error', (data) => {
+            this.setCameraStatus('error', data.message);
+            this.showAlert(data.message, 'obstacle');
+            this.speak('Camera connection failed');
         });
     }
 
@@ -154,6 +172,28 @@ class NavigationInterface {
     stopNavigation() {
         this.socket.emit('stop_navigation');
     }
+    
+    setCameraStatus(status, text) {
+        this.cameraLight.className = `status-light ${status}`;
+        this.cameraStatusText.textContent = text;
+    }
+    
+    connectPhoneCamera() {
+        const ip = this.phoneIP.value.trim();
+        if (!ip) {
+            this.showAlert('Please enter your phone IP address', 'obstacle');
+            return;
+        }
+        
+        this.setCameraStatus('connecting', 'Connecting to phone...');
+        this.socket.emit('connect_phone_camera', { ip: ip });
+    }
+    
+    connectUSBCamera() {
+        const cameraId = parseInt(this.usbCameraId.value);
+        this.setCameraStatus('connecting', 'Connecting to USB camera...');
+        this.socket.emit('connect_usb_camera', { id: cameraId });
+    }
 }
 
 // Global functions for button onclick handlers
@@ -166,6 +206,18 @@ function startNavigation() {
 function stopNavigation() {
     if (window.navInterface) {
         window.navInterface.stopNavigation();
+    }
+}
+
+function connectPhoneCamera() {
+    if (window.navInterface) {
+        window.navInterface.connectPhoneCamera();
+    }
+}
+
+function connectUSBCamera() {
+    if (window.navInterface) {
+        window.navInterface.connectUSBCamera();
     }
 }
 

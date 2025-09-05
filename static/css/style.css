@@ -101,6 +101,97 @@ header p {
     margin-left: 5px;
 }
 
+/* Camera Setup */
+.camera-setup {
+    margin-bottom: 30px;
+}
+
+.camera-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+}
+
+.camera-card h2 {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    color: #4a5568;
+    text-align: center;
+}
+
+.camera-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.camera-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.camera-option {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+}
+
+.camera-option h3 {
+    margin-bottom: 8px;
+    color: #2d3748;
+    font-size: 1.1rem;
+}
+
+.camera-option p {
+    margin-bottom: 15px;
+    color: #718096;
+    font-size: 0.9rem;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.input-group input,
+.input-group select {
+    padding: 10px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.input-group input:focus,
+.input-group select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.phone-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 0.9rem;
+    padding: 10px 15px;
+    min-width: auto;
+}
+
+.usb-btn {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    font-size: 0.9rem;
+    padding: 10px 15px;
+    min-width: auto;
+}
+
 /* Controls */
 .controls {
     display: flex;
@@ -251,6 +342,10 @@ footer {
 /* Responsive Design */
 @media (max-width: 768px) {
     .status-panel {
+        grid-template-columns: 1fr;
+    }
+    
+    .camera-options {
         grid-template-columns: 1fr;
     }
     
