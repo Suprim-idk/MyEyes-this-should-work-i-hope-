@@ -188,56 +188,291 @@ class MobileNavigationApp {
         const width = imageData.width;
         const height = imageData.height;
 
-        // Convert to grayscale and detect edges
-        let leftEdges = 0, rightEdges = 0;
-        let totalPixels = 0;
-
-        for (let y = Math.floor(height * 0.3); y < height; y++) {
-            for (let x = 0; x < width; x++) {
+        // Enhanced multi-method obstacle detection
+        const analysis = this.performEnhancedAnalysis(data, width, height);
+        
+        // Apply temporal smoothing to reduce false alerts
+        const smoothedDistance = this.applySmoothingFilter(analysis.distance);
+        
+        return {
+            distance: Math.round(smoothedDistance),
+            direction: analysis.direction,
+            confidence: analysis.confidence,
+            leftEdges: analysis.leftEdges,
+            rightEdges: analysis.rightEdges
+        };
+    }
+    
+    performEnhancedAnalysis(data, width, height) {
+        // Method 1: Edge-based detection with improved sensitivity
+        const edgeAnalysis = this.analyzeEdges(data, width, height);
+        
+        // Method 2: Texture analysis for surface detection
+        const textureAnalysis = this.analyzeTexture(data, width, height);
+        
+        // Method 3: Contrast analysis for depth estimation
+        const contrastAnalysis = this.analyzeContrast(data, width, height);
+        
+        // Method 4: Ground plane analysis
+        const groundAnalysis = this.analyzeGroundPlane(data, width, height);
+        
+        // Combine all methods with weighted confidence
+        const combinedDistance = this.combineDistanceEstimates([
+            { distance: edgeAnalysis.distance, weight: 0.3, confidence: edgeAnalysis.confidence },
+            { distance: textureAnalysis.distance, weight: 0.25, confidence: textureAnalysis.confidence },
+            { distance: contrastAnalysis.distance, weight: 0.25, confidence: contrastAnalysis.confidence },
+            { distance: groundAnalysis.distance, weight: 0.2, confidence: groundAnalysis.confidence }
+        ]);
+        
+        // Enhanced directional analysis
+        const direction = this.determineOptimalDirection(edgeAnalysis, textureAnalysis);
+        
+        return {
+            distance: combinedDistance.distance,
+            direction: direction,
+            confidence: combinedDistance.confidence,
+            leftEdges: edgeAnalysis.leftEdges,
+            rightEdges: edgeAnalysis.rightEdges
+        };
+    }
+    
+    analyzeEdges(data, width, height) {
+        let leftEdges = 0, rightEdges = 0, totalEdges = 0;
+        const edgeThreshold = 25; // Adjusted for better sensitivity
+        
+        // Focus on critical navigation area (middle to bottom)
+        for (let y = Math.floor(height * 0.4); y < height - 1; y++) {
+            for (let x = 1; x < width - 1; x++) {
                 const i = (y * width + x) * 4;
-                const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
                 
-                // Simple edge detection
-                if (x > 0 && x < width - 1) {
-                    const prevGray = (data[i - 4] + data[i - 3] + data[i - 2]) / 3;
-                    const nextGray = (data[i + 4] + data[i + 5] + data[i + 6]) / 3;
-                    const edge = Math.abs(prevGray - nextGray);
-                    
-                    if (edge > 30) { // Edge threshold
-                        if (x < width / 2) {
-                            leftEdges++;
-                        } else {
-                            rightEdges++;
-                        }
+                // Calculate gradient magnitude (Sobel-like)
+                const gx = this.getGrayValue(data, i + 4) - this.getGrayValue(data, i - 4);
+                const gy = this.getGrayValue(data, (y + 1) * width * 4 + x * 4) - 
+                          this.getGrayValue(data, (y - 1) * width * 4 + x * 4);
+                const magnitude = Math.sqrt(gx * gx + gy * gy);
+                
+                if (magnitude > edgeThreshold) {
+                    totalEdges++;
+                    if (x < width / 2) {
+                        leftEdges++;
+                    } else {
+                        rightEdges++;
                     }
                 }
-                totalPixels++;
             }
         }
-
-        // Calculate distance estimate based on bottom portion detail
-        const bottomY = Math.floor(height * 0.8);
-        let bottomDetail = 0;
-        let bottomPixels = 0;
-
-        for (let y = bottomY; y < height; y++) {
-            for (let x = 0; x < width; x++) {
+        
+        // Distance based on edge density in bottom region
+        const bottomY = Math.floor(height * 0.7);
+        let bottomEdges = 0;
+        let bottomPixels = (height - bottomY) * width;
+        
+        for (let y = bottomY; y < height - 1; y++) {
+            for (let x = 1; x < width - 1; x++) {
                 const i = (y * width + x) * 4;
-                const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
-                bottomDetail += gray;
-                bottomPixels++;
+                const gx = this.getGrayValue(data, i + 4) - this.getGrayValue(data, i - 4);
+                const gy = this.getGrayValue(data, (y + 1) * width * 4 + x * 4) - 
+                          this.getGrayValue(data, (y - 1) * width * 4 + x * 4);
+                if (Math.sqrt(gx * gx + gy * gy) > edgeThreshold) {
+                    bottomEdges++;
+                }
             }
         }
-
-        const avgDetail = bottomPixels > 0 ? bottomDetail / bottomPixels : 128;
-        const distance = Math.max(20, Math.min(200, (255 - avgDetail) * 2 + 30));
-
+        
+        const edgeDensity = bottomEdges / bottomPixels;
+        const distance = Math.max(25, Math.min(250, 180 - (edgeDensity * 2000)));
+        
         return {
-            distance: Math.round(distance),
-            direction: leftEdges < rightEdges ? 'left' : 'right',
-            leftEdges,
-            rightEdges
+            distance: distance,
+            confidence: Math.min(1.0, totalEdges / 1000),
+            leftEdges: leftEdges,
+            rightEdges: rightEdges
         };
+    }
+    
+    analyzeTexture(data, width, height) {
+        // Analyze texture patterns to detect surfaces and obstacles
+        const blockSize = 8;
+        let textureVariance = 0;
+        let blockCount = 0;
+        
+        // Focus on lower portion of image
+        const startY = Math.floor(height * 0.6);
+        
+        for (let y = startY; y < height - blockSize; y += blockSize) {
+            for (let x = 0; x < width - blockSize; x += blockSize) {
+                const variance = this.calculateBlockVariance(data, x, y, blockSize, width);
+                textureVariance += variance;
+                blockCount++;
+            }
+        }
+        
+        const avgVariance = blockCount > 0 ? textureVariance / blockCount : 0;
+        
+        // Higher variance = more texture = closer objects
+        const distance = Math.max(30, Math.min(200, 150 - (avgVariance / 10)));
+        
+        return {
+            distance: distance,
+            confidence: Math.min(1.0, avgVariance / 1000)
+        };
+    }
+    
+    analyzeContrast(data, width, height) {
+        // Analyze contrast changes to detect depth
+        const centerX = Math.floor(width / 2);
+        const roadWidth = Math.floor(width * 0.6);
+        const startX = centerX - Math.floor(roadWidth / 2);
+        const endX = centerX + Math.floor(roadWidth / 2);
+        
+        let totalContrast = 0;
+        let contrastPoints = 0;
+        
+        // Scan vertically in center region
+        for (let x = startX; x < endX; x += 4) {
+            let previousGray = 0;
+            for (let y = Math.floor(height * 0.5); y < height; y += 2) {
+                const gray = this.getGrayValue(data, (y * width + x) * 4);
+                if (y > Math.floor(height * 0.5)) {
+                    totalContrast += Math.abs(gray - previousGray);
+                    contrastPoints++;
+                }
+                previousGray = gray;
+            }
+        }
+        
+        const avgContrast = contrastPoints > 0 ? totalContrast / contrastPoints : 0;
+        
+        // Higher contrast = more detail = closer
+        const distance = Math.max(25, Math.min(180, 140 - (avgContrast * 3)));
+        
+        return {
+            distance: distance,
+            confidence: Math.min(1.0, avgContrast / 50)
+        };
+    }
+    
+    analyzeGroundPlane(data, width, height) {
+        // Detect ground plane to estimate distance
+        const horizonY = Math.floor(height * 0.4);
+        const groundY = Math.floor(height * 0.8);
+        
+        let groundBrightness = 0;
+        let groundPixels = 0;
+        
+        // Sample ground region
+        for (let y = groundY; y < height; y++) {
+            for (let x = Math.floor(width * 0.2); x < Math.floor(width * 0.8); x += 4) {
+                groundBrightness += this.getGrayValue(data, (y * width + x) * 4);
+                groundPixels++;
+            }
+        }
+        
+        const avgGroundBrightness = groundPixels > 0 ? groundBrightness / groundPixels : 128;
+        
+        // Detect brightness changes that indicate obstacles
+        let obstacleIndicator = 0;
+        for (let y = Math.floor(height * 0.6); y < groundY; y++) {
+            for (let x = Math.floor(width * 0.3); x < Math.floor(width * 0.7); x += 2) {
+                const brightness = this.getGrayValue(data, (y * width + x) * 4);
+                if (Math.abs(brightness - avgGroundBrightness) > 30) {
+                    obstacleIndicator++;
+                }
+            }
+        }
+        
+        const distance = Math.max(20, Math.min(200, 120 - (obstacleIndicator / 10)));
+        
+        return {
+            distance: distance,
+            confidence: Math.min(1.0, obstacleIndicator / 500)
+        };
+    }
+    
+    getGrayValue(data, index) {
+        return (data[index] + data[index + 1] + data[index + 2]) / 3;
+    }
+    
+    calculateBlockVariance(data, startX, startY, blockSize, width) {
+        let sum = 0;
+        let sumSquares = 0;
+        let count = 0;
+        
+        for (let y = startY; y < startY + blockSize; y++) {
+            for (let x = startX; x < startX + blockSize; x++) {
+                const gray = this.getGrayValue(data, (y * width + x) * 4);
+                sum += gray;
+                sumSquares += gray * gray;
+                count++;
+            }
+        }
+        
+        if (count === 0) return 0;
+        const mean = sum / count;
+        const variance = (sumSquares / count) - (mean * mean);
+        return variance;
+    }
+    
+    combineDistanceEstimates(estimates) {
+        let weightedSum = 0;
+        let totalWeight = 0;
+        let totalConfidence = 0;
+        
+        estimates.forEach(est => {
+            const weight = est.weight * est.confidence;
+            weightedSum += est.distance * weight;
+            totalWeight += weight;
+            totalConfidence += est.confidence;
+        });
+        
+        const finalDistance = totalWeight > 0 ? weightedSum / totalWeight : 100;
+        const avgConfidence = totalConfidence / estimates.length;
+        
+        return {
+            distance: finalDistance,
+            confidence: avgConfidence
+        };
+    }
+    
+    determineOptimalDirection(edgeAnalysis, textureAnalysis) {
+        // Enhanced direction determination
+        const edgeRatio = edgeAnalysis.leftEdges / (edgeAnalysis.rightEdges + 1);
+        
+        // Prefer direction with less obstacles (fewer edges)
+        if (edgeRatio < 0.7) {
+            return 'left';  // More space on left
+        } else if (edgeRatio > 1.3) {
+            return 'right'; // More space on right
+        } else {
+            return 'straight'; // Relatively clear ahead
+        }
+    }
+    
+    applySmoothingFilter(newDistance) {
+        // Initialize history if needed
+        if (!this.distanceHistory) {
+            this.distanceHistory = [];
+        }
+        
+        // Add new reading
+        this.distanceHistory.push(newDistance);
+        
+        // Keep only last 5 readings for smoothing
+        if (this.distanceHistory.length > 5) {
+            this.distanceHistory.shift();
+        }
+        
+        // Apply weighted moving average (recent readings have more weight)
+        let weightedSum = 0;
+        let totalWeight = 0;
+        
+        for (let i = 0; i < this.distanceHistory.length; i++) {
+            const weight = i + 1; // More recent = higher weight
+            weightedSum += this.distanceHistory[i] * weight;
+            totalWeight += weight;
+        }
+        
+        return weightedSum / totalWeight;
     }
 
     startNavigation() {
@@ -262,20 +497,59 @@ class MobileNavigationApp {
             if (this.isNavigationRunning && this.cameraStream) {
                 const analysis = this.analyzeFrame();
                 if (analysis) {
-                    // Send analysis to server
-                    this.socket.emit('camera_analysis', analysis);
+                    // Enhanced instruction generation
+                    const instruction = this.generateSmartInstruction(analysis);
                     
-                    // Update local display immediately
+                    // Send analysis to server
+                    this.socket.emit('camera_analysis', {
+                        ...analysis,
+                        instruction: instruction
+                    });
+                    
+                    // Update local display with enhanced feedback
                     this.updateNavigationDisplay({
                         distance: analysis.distance,
                         direction: analysis.direction,
                         obstacle_detected: analysis.distance < this.sensitivity,
-                        last_instruction: analysis.distance < this.sensitivity ? 
-                            `Turn ${analysis.direction} now!` : 'Path is clear'
+                        last_instruction: instruction,
+                        confidence: analysis.confidence
                     });
                 }
             }
-        }, 200); // Analyze 5 times per second
+        }, 150); // Slightly faster analysis for better responsiveness
+    }
+    
+    generateSmartInstruction(analysis) {
+        const distance = analysis.distance;
+        const direction = analysis.direction;
+        const confidence = analysis.confidence || 0.5;
+        
+        // Multi-level warning system
+        if (distance < this.sensitivity * 0.6) {
+            // Critical zone - immediate action needed
+            if (confidence > 0.7) {
+                return `STOP! Turn ${direction} immediately!`;
+            } else {
+                return `Caution! Obstacle detected - turn ${direction}`;
+            }
+        } else if (distance < this.sensitivity) {
+            // Warning zone - prepare to turn
+            if (direction === 'straight') {
+                return 'Obstacle ahead - slow down and prepare to navigate';
+            } else {
+                return `Obstacle ahead - prepare to turn ${direction}`;
+            }
+        } else if (distance < this.sensitivity * 1.5) {
+            // Caution zone - awareness
+            return `Caution - obstacle at ${Math.round(distance)}cm ahead`;
+        } else {
+            // Safe zone
+            if (direction === 'straight') {
+                return 'Path is clear - safe to continue straight';
+            } else {
+                return 'Path is clear - continue forward';
+            }
+        }
     }
 
     stopAnalysisLoop() {
@@ -286,38 +560,65 @@ class MobileNavigationApp {
     }
 
     updateNavigationDisplay(data) {
-        // Update distance
+        // Update distance with confidence indicator
         this.distanceValue.textContent = data.distance;
         
-        // Update distance color
-        if (data.distance < this.sensitivity) {
+        // Enhanced distance color coding with more levels
+        if (data.distance < this.sensitivity * 0.6) {
             this.distanceValue.className = 'distance-value danger';
+            this.instructionCard.style.backgroundColor = '#fed7d7';
+            this.instructionIcon.textContent = '🚨';
+        } else if (data.distance < this.sensitivity) {
+            this.distanceValue.className = 'distance-value danger';
+            this.instructionCard.style.backgroundColor = '#fed7d7';
+            this.instructionIcon.textContent = '⚠️';
         } else if (data.distance < this.sensitivity * 1.5) {
             this.distanceValue.className = 'distance-value warning';
+            this.instructionCard.style.backgroundColor = '#fef5e7';
+            this.instructionIcon.textContent = '⚡';
         } else {
             this.distanceValue.className = 'distance-value';
+            this.instructionCard.style.backgroundColor = '#f0fff4';
+            this.instructionIcon.textContent = '✅';
         }
 
-        // Update instruction
+        // Update instruction with enhanced feedback
         this.instructionText.textContent = data.last_instruction;
         
+        // Enhanced alert handling
         if (data.obstacle_detected) {
-            this.instructionCard.style.backgroundColor = '#fed7d7';
             this.instructionText.classList.add('alert');
-            this.instructionIcon.textContent = '⚠️';
             
-            if (this.voiceEnabled) {
-                this.speak(data.last_instruction);
-            }
-            
-            // Vibrate if supported
-            if (navigator.vibrate) {
-                navigator.vibrate([200, 100, 200]);
+            // More aggressive vibration for critical zones
+            if (data.distance < this.sensitivity * 0.6) {
+                if (navigator.vibrate) {
+                    navigator.vibrate([300, 150, 300, 150, 300]);
+                }
+                
+                // Critical voice alert
+                if (this.voiceEnabled && (!this.lastCriticalAlert || Date.now() - this.lastCriticalAlert > 2000)) {
+                    this.speak(data.last_instruction);
+                    this.lastCriticalAlert = Date.now();
+                }
+            } else {
+                if (navigator.vibrate) {
+                    navigator.vibrate([200, 100, 200]);
+                }
+                
+                // Regular voice alert
+                if (this.voiceEnabled && (!this.lastVoiceAlert || Date.now() - this.lastVoiceAlert > 3000)) {
+                    this.speak(data.last_instruction);
+                    this.lastVoiceAlert = Date.now();
+                }
             }
         } else {
-            this.instructionCard.style.backgroundColor = 'white';
             this.instructionText.classList.remove('alert');
-            this.instructionIcon.textContent = 'ℹ️';
+        }
+        
+        // Show confidence level for debugging (optional)
+        if (data.confidence !== undefined) {
+            const confidenceText = `${Math.round(data.confidence * 100)}% confident`;
+            // You can display this somewhere if needed for debugging
         }
     }
 
