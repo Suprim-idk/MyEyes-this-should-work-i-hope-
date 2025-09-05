@@ -8,8 +8,8 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #f5f5f5;
-    color: #333;
+    background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 50%, #252b3a 100%);
+    color: #e2e8f0;
     overflow: hidden;
 }
 
@@ -18,10 +18,10 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(135deg, #2c5aa0 0%, #1e4080 100%);
-    color: white;
+    background: linear-gradient(135deg, #1a1f2e 0%, #252b3a 100%);
+    color: #e2e8f0;
     padding: 12px 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.4);
     z-index: 1000;
     position: relative;
 }
@@ -70,8 +70,8 @@ body {
 /* Sidebar */
 .sidebar {
     width: 350px;
-    background: white;
-    border-right: 1px solid #ddd;
+    background: linear-gradient(135deg, #2d3748 0%, #363d4f 100%);
+    border-right: 1px solid #4a5568;
     overflow-y: auto;
     transition: transform 0.3s ease;
     z-index: 500;
@@ -83,12 +83,12 @@ body {
 
 .sidebar > div {
     padding: 20px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #4a5568;
 }
 
 .sidebar h3 {
     margin-bottom: 15px;
-    color: #2c5aa0;
+    color: #4fd1c7;
     font-size: 1.1rem;
 }
 
@@ -101,30 +101,36 @@ body {
 
 .search-input {
     padding: 12px 15px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid #4a5568;
     border-radius: 25px;
     font-size: 0.9rem;
+    background: #1a1f2e;
+    color: #e2e8f0;
     transition: border-color 0.3s ease;
 }
 
 .search-input:focus {
     outline: none;
-    border-color: #2c5aa0;
+    border-color: #4fd1c7;
 }
 
 .btn-primary {
-    background: #2c5aa0;
-    color: white;
+    background: linear-gradient(135deg, #4fd1c7 0%, #68d391 100%);
+    color: #0f1419;
+    font-weight: 600;
     border: none;
     padding: 12px 20px;
     border-radius: 25px;
     cursor: pointer;
     font-size: 0.9rem;
-    transition: background 0.3s ease;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(79, 209, 199, 0.3);
 }
 
 .btn-primary:hover {
-    background: #1e4080;
+    background: linear-gradient(135deg, #68d391 0%, #4fd1c7 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(79, 209, 199, 0.4);
 }
 
 .btn-secondary {
@@ -174,7 +180,7 @@ body {
 }
 
 .checkbox-label:hover {
-    background: #f8f9fa;
+    background: rgba(79, 209, 199, 0.1);
 }
 
 .checkbox-label input[type="checkbox"] {

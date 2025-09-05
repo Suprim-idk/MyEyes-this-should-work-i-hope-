@@ -1381,9 +1381,9 @@ class NepalMapsApp {
         const fromInput = document.getElementById('from-input');
         const toInput = document.getElementById('to-input');
         
-        // Set realistic demo route: Baneshwor to Civil Hospital
-        const startLocation = { lat: 27.6893, lng: 85.3458, name: 'Baneshwor, Kathmandu' };
-        const endLocation = { lat: 27.6988, lng: 85.3294, name: 'Civil Hospital, Kathmandu' };
+        // Set realistic demo route: Baneshwor to Civil Hospital (correct coordinates)
+        const startLocation = { lat: 27.689164, lng: 85.331449, name: 'New Baneshwor, Kathmandu' };
+        const endLocation = { lat: 27.68656, lng: 85.33894, name: 'Civil Service Hospital, Kathmandu' };
         
         // Set input values and data
         fromInput.value = startLocation.name;
@@ -1439,35 +1439,29 @@ class NepalMapsApp {
     }
     
     createBaneshworToCivilHospitalRoute() {
-        // Realistic route geometry following actual roads from Baneshwor to Civil Hospital
+        // Realistic route geometry following actual roads from New Baneshwor to Civil Hospital
         const routeGeometry = [
-            [27.6893, 85.3458], // Baneshwor starting point
-            [27.6895, 85.3455], // Start on local road
-            [27.6898, 85.3450], // Continue on local road
-            [27.6902, 85.3442], // Along Baneshwor main road
-            [27.6905, 85.3438], // Continue on main road
-            [27.6910, 85.3432], // Approach major intersection
-            [27.6915, 85.3425], // Turn towards Ring Road
-            [27.6920, 85.3420], // Approach Ring Road
-            [27.6925, 85.3412], // Enter Ring Road
-            [27.6928, 85.3408], // Ring Road junction
-            [27.6935, 85.3398], // Continue on Ring Road
-            [27.6940, 85.3392], // Ring Road section
-            [27.6945, 85.3385], // Along Ring Road (stairs location)
-            [27.6950, 85.3378], // Continue on Ring Road
-            [27.6955, 85.3372], // Ring Road curve
-            [27.6958, 85.3365], // Continuing on Ring Road (pothole 1)
-            [27.6962, 85.3358], // Ring Road section
-            [27.6965, 85.3352], // Approach hospital turn
-            [27.6968, 85.3348], // Turn towards Civil Hospital area (ramp)
-            [27.6972, 85.3340], // Hospital access road
-            [27.6975, 85.3335], // Continue towards hospital
-            [27.6978, 85.3325], // Turn towards hospital (pothole 2)
-            [27.6980, 85.3320], // Hospital approach
-            [27.6982, 85.3315], // Getting closer to hospital
-            [27.6985, 85.3310], // Hospital approach road (pothole 3)
-            [27.6987, 85.3305], // Final approach
-            [27.6988, 85.3294]  // Civil Hospital destination
+            [27.689164, 85.331449], // New Baneshwor starting point
+            [27.6890, 85.3320], // Start on local road
+            [27.6888, 85.3325], // Continue towards main road
+            [27.6886, 85.3330], // Approach main road
+            [27.6884, 85.3335], // Main road access
+            [27.6882, 85.3340], // Along main road
+            [27.6880, 85.3345], // Continue on main road
+            [27.6878, 85.3350], // Road section
+            [27.6876, 85.3355], // Continue towards Ring Road
+            [27.6874, 85.3360], // Approach Ring Road junction
+            [27.6872, 85.3365], // Ring Road area (stairs location)
+            [27.6870, 85.3370], // Continue on Ring Road
+            [27.6868, 85.3375], // Ring Road section (pothole 1)
+            [27.6866, 85.3380], // Continue on Ring Road
+            [27.6864, 85.3385], // Ring Road curve
+            [27.6862, 85.3388], // Approach hospital turn (ramp)
+            [27.6860, 85.3390], // Turn towards Civil Hospital area
+            [27.6858, 85.3392], // Hospital access road
+            [27.6856, 85.3394], // Continue towards hospital (pothole 2)
+            [27.6854, 85.3396], // Hospital approach road (pothole 3)
+            [27.68656, 85.33894]  // Civil Service Hospital destination
         ];
         
         const instructions = [
@@ -1485,31 +1479,31 @@ class NepalMapsApp {
             {
                 type: 'stairs',
                 count: 66,
-                location: [27.6945, 85.3385],
+                location: [27.6872, 85.3365],
                 severity: 'critical',
                 message: '66 stairs detected - wheelchair users must find alternative route'
             },
             {
                 type: 'pothole',
-                location: [27.6958, 85.3365],
+                location: [27.6868, 85.3375],
                 severity: 'medium',
                 message: 'Large pothole - navigate carefully'
             },
             {
                 type: 'pothole',
-                location: [27.6978, 85.3325],
+                location: [27.6858, 85.3392],
                 severity: 'low',
                 message: 'Small pothole detected'
             },
             {
                 type: 'pothole',
-                location: [27.6985, 85.3310],
+                location: [27.6854, 85.3396],
                 severity: 'medium',
                 message: 'Moderate pothole - slow down'
             },
             {
                 type: 'ramp',
-                location: [27.6968, 85.3348],
+                location: [27.6862, 85.3388],
                 severity: 'accessible',
                 message: 'Wheelchair accessible ramp available'
             }
